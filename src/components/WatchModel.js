@@ -209,9 +209,11 @@ export class WatchModel {
   buildOuterCase() {
     const caseGroup = new THREE.Group();
 
-    // Case barrel
+    // Case barrel (needs rotation to be a vertical ring, not a flat disk!)
     const caseGeo = new THREE.CylinderGeometry(1.45, 1.45, 0.42, 64, 1, true);
-    caseGroup.add(new THREE.Mesh(caseGeo, this.materials.case));
+    const caseMesh = new THREE.Mesh(caseGeo, this.materials.case);
+    caseMesh.rotation.x = Math.PI / 2;
+    caseGroup.add(caseMesh);
 
     // Case back ring
     const backRing = new THREE.Mesh(new THREE.TorusGeometry(1.42, 0.06, 16, 64), this.materials.case);
@@ -462,8 +464,8 @@ export class WatchModel {
     for (let i = 0; i < 12; i++) {
       const angle = (i / 12) * Math.PI * 2;
       const isQ = i % 3 === 0;
-      const idx = new THREE.Mesh(new THREE.BoxGeometry(isQ ? 0.05 : 0.03, 0.14, 0.025), this.materials.case);
-      idx.position.set(Math.sin(angle) * 1.2, Math.cos(angle) * 1.2, 0.17);
+      const idx = new THREE.Mesh(new THREE.BoxGeometry(isQ ? 0.06 : 0.035, 0.16, 0.04), this.materials.case);
+      idx.position.set(Math.sin(angle) * 1.2, Math.cos(angle) * 1.2, 0.21); // Lifted above dial surface
       idx.rotation.z = -angle;
       dialGroup.add(idx);
     }
@@ -556,17 +558,6 @@ export class WatchModel {
     ridgeMesh.position.set(0, 0.4, 0.155);
     dialFaceGroup.add(ridgeMesh);
 
-    // Hour markers printed on the dial face
-    for (let i = 0; i < 12; i++) {
-      const angle = (i / 12) * Math.PI * 2;
-      const isQ = i % 3 === 0;
-      const markerGeo = new THREE.BoxGeometry(isQ ? 0.055 : 0.03, isQ ? 0.16 : 0.10, 0.015);
-      const marker = new THREE.Mesh(markerGeo, this.materials.case);
-      marker.position.set(Math.sin(angle) * 1.1, Math.cos(angle) * 1.1, 0.18);
-      marker.rotation.z = -angle;
-      dialFaceGroup.add(marker);
-    }
-
     // Register the solid dial face as its own part
     const dialFaceMeta = {
       name: 'Solid Dial Face',
@@ -622,21 +613,8 @@ export class WatchModel {
   // ─────────────────────────────────────────────────────────────────────────
   explodeToChapter(chapterIndex, duration = 1.6) {
     this.currentChapter = chapterIndex;
-    const targets = CHAPTER_TARGETS[chapterIndex] || {};
-
-    Object.entries(this.parts).forEach(([id, partGroup]) => {
-      const assembled = partGroup.userData.assembled;
-      const target = targets[id];
-
-      gsap.to(partGroup.position, {
-        x: assembled.x + (target ? target.x : 0),
-        y: assembled.y + (target ? target.y : 0),
-        z: assembled.z + (target ? target.z : 0),
-        duration,
-        ease: 'power2.inOut',
-        overwrite: 'auto'
-      });
-    });
+    // Note: Parts explosion is now exclusively driven by continuous scroll via `explodeByProgress`.
+    // GSAP tweens were removed here so they don't fight the user's scroll position!
   }
 
   // Manual slider (maps 0..1 across 6 chapters)

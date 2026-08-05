@@ -174,10 +174,11 @@ class HorologiaApp {
         const chapterIdx = Math.floor(chapterFloat);
         // Map slider 0..1 based on scroll position
         const sliderVal = self.progress;
-        if (slider && !this.manualControl) {
-          slider.value = sliderVal;
-          if (label) label.textContent = `${Math.round(sliderVal * 100)}%`;
-        }
+        if (slider) slider.value = sliderVal;
+        if (label) label.textContent = `${Math.round(sliderVal * 100)}%`;
+        
+        // Scrub the watch explosion perfectly to scroll progress
+        this.watchModel.explodeByProgress(sliderVal);
       }
     });
 

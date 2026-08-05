@@ -62,10 +62,10 @@ body {
 }
 
 /* ══════════════════════════════════════════════
-   SCROLL PROXY — 700vh, no visual content
+   SCROLL PROXY — 800vh (Allows 700vh of actual scroll distance for 7 chapters)
 ══════════════════════════════════════════════ */
 #scroll-proxy {
-  height: 700vh;
+  height: 800vh;
   width: 100%;
   pointer-events: none;
 }
