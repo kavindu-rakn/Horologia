@@ -30,11 +30,9 @@ class HorologiaApp {
     this.initShowcaseGallery();
     this.initFirebaseGuide();
 
-    // Start Animation Render Loop
     this.animate();
   }
 
-  // --- Smooth Scroll & ScrollTrigger Integration ---
   initSmoothScroll() {
     this.lenis = new Lenis({
       duration: 1.2,
@@ -51,7 +49,6 @@ class HorologiaApp {
   }
 
   initScrollAnimations() {
-    // Drive exploded view translation from page scroll depth
     gsap.to(this, {
       explodeProgress: 1.0,
       scrollTrigger: {
@@ -66,31 +63,26 @@ class HorologiaApp {
       }
     });
 
-    // Camera rotation & zoom dynamics per chapter
+    // Gentle camera orbit and watch tilt timeline
     const tl = gsap.timeline({
       scrollTrigger: {
         trigger: '.scroll-container',
         start: 'top top',
         end: 'bottom bottom',
-        scrub: 1.5
+        scrub: 1.2
       }
     });
 
-    tl.to(this.sceneManager.camera.position, { x: 1.5, y: -2.0, z: 6.0 }, 0)
-      .to(this.watchModel.group.rotation, { x: 0.4, y: 0.6, z: 0 }, 0)
-      .to(this.sceneManager.camera.position, { x: -1.5, y: -1.5, z: 5.5 }, 0.25)
-      .to(this.watchModel.group.rotation, { x: -0.3, y: -0.8, z: 0.2 }, 0.25)
-      .to(this.sceneManager.camera.position, { x: 0, y: -4.0, z: 8.5 }, 0.5)
-      .to(this.watchModel.group.rotation, { x: 0.8, y: 0.2, z: -0.4 }, 0.5)
-      .to(this.sceneManager.camera.position, { x: 0, y: -2.5, z: 9.5 }, 0.75)
-      .to(this.watchModel.group.rotation, { x: 0.5, y: 1.2, z: 0 }, 0.75);
+    tl.to(this.watchModel.group.rotation, { x: 0.35, y: -0.45, z: 0.1 }, 0)
+      .to(this.watchModel.group.rotation, { x: -0.2, y: -0.8, z: -0.15 }, 0.25)
+      .to(this.watchModel.group.rotation, { x: 0.45, y: 0.3, z: 0.2 }, 0.5)
+      .to(this.watchModel.group.rotation, { x: 0.15, y: 0.8, z: 0 }, 0.75);
   }
 
   updateExplosion(val) {
     this.explodeProgress = val;
     this.watchModel.updateExplosion(val);
 
-    // Update Manual Slider UI
     const slider = document.getElementById('explode-slider');
     const label = document.getElementById('explode-percent');
     if (slider) slider.value = val;
@@ -111,7 +103,6 @@ class HorologiaApp {
     });
   }
 
-  // --- Raycasting Inspector HUD ---
   initRaycaster() {
     const inspectorEl = document.getElementById('part-inspector');
     const titleEl = document.getElementById('inspector-title');
@@ -136,9 +127,7 @@ class HorologiaApp {
     );
   }
 
-  // --- Global UI Listeners ---
   initUI() {
-    // Explode Slider manual control
     const slider = document.getElementById('explode-slider');
     if (slider) {
       slider.addEventListener('input', (e) => {
@@ -148,7 +137,6 @@ class HorologiaApp {
       });
     }
 
-    // Audio Toggle
     const btnSound = document.getElementById('btn-sound');
     const soundIcon = document.getElementById('sound-icon');
     const soundLabel = document.getElementById('sound-label');
@@ -160,11 +148,9 @@ class HorologiaApp {
       soundLabel.textContent = muted ? 'Muted' : 'Audio On';
     });
 
-    // Start Audio Context on first interaction
     window.addEventListener('click', () => soundEngine.init(), { once: true });
   }
 
-  // --- Material Lab Drawer & Presets ---
   initMaterialLab() {
     const labDrawer = document.getElementById('material-lab');
     const btnCustomizer = document.getElementById('btn-customizer');
@@ -181,7 +167,6 @@ class HorologiaApp {
       btnCustomizer.classList.remove('active');
     });
 
-    // Populate Presets
     presetContainer.innerHTML = MATERIAL_SCHEMES.map(s => `
       <div class="preset-card ${s.id === this.watchModel.currentScheme.id ? 'active' : ''}" data-scheme-id="${s.id}">
         <div class="preset-color-swatch" style="background: #${s.caseColor.toString(16).padStart(6, '0')}"></div>
@@ -207,7 +192,6 @@ class HorologiaApp {
       }
     });
 
-    // Save Creation Modal
     const btnOpenSave = document.getElementById('btn-open-save-modal');
     const saveModal = document.getElementById('save-modal');
     const btnCloseSave = document.getElementById('btn-close-save');
@@ -242,7 +226,6 @@ class HorologiaApp {
     });
   }
 
-  // --- Showcase Gallery Modal ---
   initShowcaseGallery() {
     const showcaseModal = document.getElementById('showcase-modal');
     const btnShowcase = document.getElementById('btn-showcase');
@@ -292,7 +275,6 @@ class HorologiaApp {
     });
   }
 
-  // --- Firebase Guide & Manual Config Modal ---
   initFirebaseGuide() {
     const guideModal = document.getElementById('firebase-modal');
     const btnGuide = document.getElementById('btn-firebase-guide');
@@ -312,15 +294,14 @@ class HorologiaApp {
           alert('⚡ Live Firebase project connected successfully!');
           guideModal.classList.remove('open');
         } else {
-          alert('⚠️ Invalid Firebase configuration object. Please check your credentials.');
+          alert('⚠️ Invalid Firebase configuration object.');
         }
       } catch (err) {
-        alert('⚠️ Invalid JSON format. Make sure to paste a valid JSON config object.');
+        alert('⚠️ Invalid JSON format.');
       }
     });
   }
 
-  // --- Render Loop ---
   animate() {
     requestAnimationFrame(() => this.animate());
 
@@ -328,17 +309,13 @@ class HorologiaApp {
     const delta = (now - this.lastTime) / 1000;
     this.lastTime = now;
 
-    // Kinematic Gear & Balance Wheel Oscillations
     this.watchModel.updateKinematics(delta);
-
-    // Three.js Scene Update & Render
     this.sceneManager.update();
     this.raycasterManager.update();
     this.sceneManager.render();
   }
 }
 
-// Instantiate Horologia Application
 window.addEventListener('DOMContentLoaded', () => {
   new HorologiaApp();
 });
