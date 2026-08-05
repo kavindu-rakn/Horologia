@@ -110,6 +110,7 @@ class HorologiaApp {
     this.lastTime = performance.now();
     this.oscillationTime = 0;    // For gentle hero/final chapter ±15° swing
     this.manualControl = false;  // True when user drags the explode slider
+    this.userHasRotated = false; // True when user manually rotates via drag
     this.isDragging = false;     // True when user drag-rotates the watch
     this.dragStart = { x: 0, y: 0 };
     this.dragRotStart = { x: 0, y: 0 };
@@ -200,6 +201,7 @@ class HorologiaApp {
   activateChapter(index, animate = true) {
     if (index === this.currentChapter && animate) return;
     this.currentChapter = index;
+    this.userHasRotated = false; // Reset manual rotation flag on chapter change
 
     const ch = CHAPTERS[index];
     const duration = animate ? 1.6 : 0;
@@ -475,6 +477,7 @@ class HorologiaApp {
     canvas.addEventListener('pointerdown', (e) => {
       if (e.button !== 0 || isOverUI(e)) return;
       this.isDragging = true;
+      this.userHasRotated = true;
       this.dragStart = { x: e.clientX, y: e.clientY };
       this.dragRotStart = {
         x: this.watchModel.group.rotation.x,
@@ -517,7 +520,7 @@ class HorologiaApp {
     this.oscillationTime += delta;
 
     // Gentle ±15° oscillating swing (not full spin — always shows front face)
-    if (this.watchModel.autoRotate) {
+    if (this.watchModel.autoRotate && !this.userHasRotated) {
       const baseY = CHAPTERS[this.currentChapter].watchRot.y;
       this.watchModel.group.rotation.y = baseY + Math.sin(this.oscillationTime * 0.45) * 0.26;
     }

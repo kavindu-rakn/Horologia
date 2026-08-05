@@ -218,10 +218,8 @@ export class WatchModel {
     backRing.position.z = -0.21;
     caseGroup.add(backRing);
 
-    // Case top ring
-    const topRing = new THREE.Mesh(new THREE.TorusGeometry(1.44, 0.04, 16, 64), this.materials.bezel);
-    topRing.position.z = 0.21;
-    caseGroup.add(topRing);
+
+    // Crown (winding stem)
 
     // Lugs — 4 elegant curved extensions
     [[-0.95, 1.42], [0.95, 1.42], [-0.95, -1.42], [0.95, -1.42]].forEach(([lx, ly]) => {
@@ -241,15 +239,6 @@ export class WatchModel {
       lug.rotation.z = lx > 0 ? -0.12 : 0.12;
       if (!isTop) lug.rotation.x *= -1;
       caseGroup.add(lug);
-    });
-
-    // Lug bar pins (horizontal pins connecting lug pairs to strap)
-    [-1, 1].forEach(side => {
-      const barGeo = new THREE.CylinderGeometry(0.04, 0.04, 1.9, 12);
-      const barMesh = new THREE.Mesh(barGeo, this.materials.case);
-      barMesh.rotation.z = Math.PI / 2;
-      barMesh.position.set(0, side * 1.45, -0.02);
-      caseGroup.add(barMesh);
     });
 
     // Crown (winding stem)
@@ -563,19 +552,18 @@ export class WatchModel {
 
     // Dial logo text area (raised ridge near 12 o'clock)
     const ridgeGeo = new THREE.BoxGeometry(0.35, 0.04, 0.006);
-    const ridgeMat = new THREE.MeshStandardMaterial({ color: s => s, metalness: 0.8, roughness: 0.2 });
     const ridgeMesh = new THREE.Mesh(ridgeGeo, this.materials.bezel);
-    ridgeMesh.position.set(0, 0.4, 0.147);
+    ridgeMesh.position.set(0, 0.4, 0.155);
     dialFaceGroup.add(ridgeMesh);
 
     // Hour markers printed on the dial face
-    const markerMat = new THREE.MeshStandardMaterial({ color: s => s, metalness: 0.85, roughness: 0.15 });
+    const markerMat = new THREE.MeshStandardMaterial({ color: 0xc0c0c0, metalness: 0.85, roughness: 0.15 });
     for (let i = 0; i < 12; i++) {
       const angle = (i / 12) * Math.PI * 2 - Math.PI / 2;
       const isQ = i % 3 === 0;
       const markerGeo = new THREE.BoxGeometry(isQ ? 0.055 : 0.028, isQ ? 0.16 : 0.10, 0.008);
-      const marker = new THREE.Mesh(markerGeo, this.materials.case);
-      marker.position.set(Math.cos(angle) * 1.1, Math.sin(angle) * 1.1, 0.148);
+      const marker = new THREE.Mesh(markerGeo, markerMat);
+      marker.position.set(Math.cos(angle) * 1.1, Math.sin(angle) * 1.1, 0.165);
       marker.rotation.z = -angle - Math.PI / 2;
       dialFaceGroup.add(marker);
     }
