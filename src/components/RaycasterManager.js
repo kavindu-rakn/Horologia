@@ -21,6 +21,11 @@ export class RaycasterManager {
       this.mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
     });
 
+    window.addEventListener('mouseleave', () => {
+      this.clearHover();
+      if (this.hudCallback) this.hudCallback(null, null);
+    });
+
     window.addEventListener('click', () => {
       if (this.hoveredPart) {
         soundEngine.playRatchetWinding();
@@ -31,7 +36,6 @@ export class RaycasterManager {
   update() {
     this.raycaster.setFromCamera(this.mouse, this.sceneManager.camera);
 
-    // Get all meshes inside watch model parts
     const meshesToIntersect = [];
     Object.values(this.watchModel.parts).forEach(partGroup => {
       partGroup.traverse(child => {
@@ -73,13 +77,18 @@ export class RaycasterManager {
   applyHighlight(partGroup) {
     partGroup.traverse(child => {
       if (child.isMesh && child.material) {
-        child.userData.originalEmissive = child.material.emissive ? child.material.emissive.getHex() : 0;
-        child.userData.originalEmissiveIntensity = child.material.emissiveIntensity || 0;
-
-        if (child.material.emissive) {
-          child.material.emissive.setHex(0xd4af37);
-          child.material.emissiveIntensity = 0.6;
+        // Save reference to shared original material
+        if (!child.userData.originalMaterial) {
+          child.userData.originalMaterial = child.material;
         }
+
+        // Clone material so shared instances are not mutated globally
+        const highlightMat = child.material.clone();
+        if (highlightMat.emissive) {
+          highlightMat.emissive.setHex(0xd4af37);
+          highlightMat.emissiveIntensity = 0.55;
+        }
+        child.material = highlightMat;
       }
     });
   }
@@ -88,11 +97,10 @@ export class RaycasterManager {
     if (!this.hoveredPart) return;
 
     this.hoveredPart.traverse(child => {
-      if (child.isMesh && child.material && child.userData.originalEmissive !== undefined) {
-        if (child.material.emissive) {
-          child.material.emissive.setHex(child.userData.originalEmissive);
-          child.material.emissiveIntensity = child.userData.originalEmissiveIntensity;
-        }
+      if (child.isMesh && child.userData.originalMaterial) {
+        // Cleanly restore original shared material
+        child.material = child.userData.originalMaterial;
+        delete child.userData.originalMaterial;
       }
     });
 
