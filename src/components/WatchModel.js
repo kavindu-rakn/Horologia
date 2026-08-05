@@ -152,7 +152,7 @@ export class WatchModel {
       const pts = [];
       for (let i = 0; i <= 20; i++) {
         const t = i / 20;
-        const y = yDir * (1.42 + t * (isTop ? 1.6 : 1.0));
+        const y = yDir * (1.35 + t * (isTop ? 1.6 : 1.0));
         const z = -0.05 - Math.sin(t * Math.PI * 0.45) * 0.55;
         pts.push(new THREE.Vector3(0, y, z));
       }
@@ -237,9 +237,18 @@ export class WatchModel {
       const lug = new THREE.Mesh(geo, this.materials.case);
       const isTop = ly > 0;
       lug.position.set(lx, ly, -0.11);
-      lug.rotation.x = isTop ? 0.38 : -0.38;
-      lug.rotation.z = lx > 0 ? -0.12 : 0.12;
-      if (!isTop) lug.rotation.x *= -1;
+      
+      // All lugs tilt backwards towards the wrist
+      lug.rotation.x = 0.38; 
+      
+      if (isTop) {
+        // Top lugs point up, splay left/right
+        lug.rotation.z = lx > 0 ? -0.12 : 0.12;
+      } else {
+        // Bottom lugs must be rotated 180deg (Math.PI) to point DOWN instead of UP!
+        lug.rotation.z = lx > 0 ? (Math.PI + 0.12) : (Math.PI - 0.12);
+      }
+      
       caseGroup.add(lug);
     });
 
