@@ -30,6 +30,11 @@ class HorologiaApp {
     this.initShowcaseGallery();
     this.initFirebaseGuide();
 
+    window.addEventListener('resize', () => {
+      const isDesktop = window.innerWidth > 900;
+      this.watchModel.group.position.x = isDesktop ? 1.1 : 0;
+    });
+
     this.animate();
   }
 
@@ -63,7 +68,7 @@ class HorologiaApp {
       }
     });
 
-    // Gentle camera orbit and watch tilt timeline
+    // Gentle face-forward 3D angle (never turns sideways)
     const tl = gsap.timeline({
       scrollTrigger: {
         trigger: '.scroll-container',
@@ -73,10 +78,10 @@ class HorologiaApp {
       }
     });
 
-    tl.to(this.watchModel.group.rotation, { x: 0.35, y: -0.45, z: 0.1 }, 0)
-      .to(this.watchModel.group.rotation, { x: -0.2, y: -0.8, z: -0.15 }, 0.25)
-      .to(this.watchModel.group.rotation, { x: 0.45, y: 0.3, z: 0.2 }, 0.5)
-      .to(this.watchModel.group.rotation, { x: 0.15, y: 0.8, z: 0 }, 0.75);
+    tl.to(this.watchModel.group.rotation, { x: 0.18, y: -0.25, z: 0.05 }, 0)
+      .to(this.watchModel.group.rotation, { x: 0.25, y: -0.35, z: -0.05 }, 0.3)
+      .to(this.watchModel.group.rotation, { x: 0.12, y: -0.15, z: 0.08 }, 0.6)
+      .to(this.watchModel.group.rotation, { x: 0.2, y: -0.3, z: 0 }, 1.0);
   }
 
   updateExplosion(val) {
