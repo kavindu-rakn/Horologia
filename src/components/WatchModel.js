@@ -217,14 +217,14 @@ export class WatchModel {
 
     // Case back ring
     const backRing = new THREE.Mesh(new THREE.TorusGeometry(1.42, 0.06, 16, 64), this.materials.case);
-    backRing.position.z = -0.21;
+    backRing.position.z = -0.26; // Pushed back to make room for rotor
     caseGroup.add(backRing);
 
 
     // Crown (winding stem)
 
-    // Lugs — 4 elegant curved extensions
-    [[-0.95, 1.42], [0.95, 1.42], [-0.95, -1.42], [0.95, -1.42]].forEach(([lx, ly]) => {
+    // Lugs — 4 elegant curved extensions (re-positioned to perfectly intersect r=1.45 case barrel)
+    [[-0.8, 1.15], [0.8, 1.15], [-0.8, -1.15], [0.8, -1.15]].forEach(([lx, ly]) => {
       const shape = new THREE.Shape();
       shape.moveTo(-0.14, 0);
       shape.lineTo(0.14, 0);
@@ -236,7 +236,7 @@ export class WatchModel {
       const geo = new THREE.ExtrudeGeometry(shape, { depth: 0.22, bevelEnabled: true, bevelThickness: 0.025, bevelSize: 0.025 });
       const lug = new THREE.Mesh(geo, this.materials.case);
       const isTop = ly > 0;
-      lug.position.set(lx, ly * 0.9, -0.11);
+      lug.position.set(lx, ly, -0.11);
       lug.rotation.x = isTop ? 0.38 : -0.38;
       lug.rotation.z = lx > 0 ? -0.12 : 0.12;
       if (!isTop) lug.rotation.x *= -1;
@@ -314,7 +314,7 @@ export class WatchModel {
     hub.position.z = -0.06;
     rotorGroup.add(hub);
 
-    rotorGroup.position.z = -0.72;
+    rotorGroup.position.z = -0.23; // Tucked right inside the case back ring, safely behind mainplate
     this.registerPart('rotor', rotorGroup, WATCH_PARTS.ROTOR);
   }
 
