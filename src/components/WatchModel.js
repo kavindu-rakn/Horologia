@@ -3,68 +3,72 @@ import * as THREE from 'three';
 import { gsap } from 'gsap';
 import { WATCH_PARTS, MATERIAL_SCHEMES } from '../utils/constants.js';
 
-// ── Chapter explosion targets: where each part ends up in each chapter ──
-// Each entry: [x, y, z] final position offset from initial assembled position
-// Parts not listed for a chapter stay at their assembled position (0,0,0 offset)
+// ── Chapter explosion targets ─────────────────────────────────────────────
+// Offsets from each part's assembled position. Parts not listed = stay assembled.
 const CHAPTER_TARGETS = {
-  // Ch0 — Hero: all assembled
+  // Ch0 — Hero: fully assembled, ready-to-wear
   0: {},
 
-  // Ch1 — Sapphire & Bezel: glass and bezel float forward toward camera
+  // Ch1 — Sapphire Crystal & Bezel lift off, revealing dial face
   1: {
-    sapphireGlass: { x: 0,    y: 0.1,  z: 3.2  },
-    bezel:         { x: 0,    y: 0,    z: 2.0  },
+    sapphireGlass: { x: 0,    y: 0.1,  z: 3.2 },
+    bezel:         { x: 0,    y: 0,    z: 2.0 },
   },
 
-  // Ch2 — Dial & Hands: add dial + hands lifting, bezel stays forward
+  // Ch2 — Solid dial face + ring lift off, revealing movement + hands
   2: {
-    sapphireGlass: { x: 0,    y: 0.15, z: 3.6  },
-    bezel:         { x: 0,    y: 0,    z: 2.4  },
-    hands:         { x: -0.1, y: 0.1,  z: 1.8  },
-    dial:          { x: -0.2, y: 0,    z: 1.2  },
+    sapphireGlass: { x: 0,    y: 0.15, z: 3.6 },
+    bezel:         { x: 0,    y: 0,    z: 2.4 },
+    dialFace:      { x: -0.1, y: 0.05, z: 1.6 },
+    dial:          { x: -0.2, y: 0,    z: 1.0 },
+    hands:         { x: -0.05,y: 0.05, z: 1.9 },
   },
 
-  // Ch3 — Gear Train: gears spread out laterally across the scene
+  // Ch3 — Gear train spreads laterally
   3: {
-    sapphireGlass: { x: 0,    y: 0.15, z: 3.6  },
-    bezel:         { x: 0,    y: 0,    z: 2.4  },
-    hands:         { x: -0.1, y: 0.1,  z: 1.8  },
-    dial:          { x: -0.2, y: 0,    z: 1.2  },
-    gearTrain:     { x: -1.2, y: 0.6,  z: 0.4  },
+    sapphireGlass: { x: 0,    y: 0.15, z: 3.6 },
+    bezel:         { x: 0,    y: 0,    z: 2.4 },
+    dialFace:      { x: -0.1, y: 0.05, z: 1.6 },
+    dial:          { x: -0.2, y: 0,    z: 1.0 },
+    hands:         { x: -0.05,y: 0.05, z: 1.9 },
+    gearTrain:     { x: -1.2, y: 0.6,  z: 0.4 },
   },
 
-  // Ch4 — Balance Wheel & Escapement: balance wheel floats upper-left
+  // Ch4 — Balance wheel floats upper-left
   4: {
-    sapphireGlass: { x: 0,    y: 0.15, z: 3.6  },
-    bezel:         { x: 0.2,  y: 0,    z: 2.4  },
-    hands:         { x: -0.1, y: 0.1,  z: 1.8  },
-    dial:          { x: -0.2, y: 0,    z: 1.2  },
-    gearTrain:     { x: -1.8, y: 0.8,  z: 0.6  },
-    balanceWheel:  { x: -2.2, y: 1.4,  z: 1.2  },
+    sapphireGlass: { x: 0,    y: 0.15, z: 3.6 },
+    bezel:         { x: 0.2,  y: 0,    z: 2.4 },
+    dialFace:      { x: -0.1, y: 0.05, z: 1.6 },
+    dial:          { x: -0.2, y: 0,    z: 1.0 },
+    hands:         { x: -0.05,y: 0.05, z: 1.9 },
+    gearTrain:     { x: -1.8, y: 0.8,  z: 0.6 },
+    balanceWheel:  { x: -2.2, y: 1.4,  z: 1.2 },
   },
 
-  // Ch5 — Bridges & Jewels: structural layers separate
+  // Ch5 — Bridges & Jewels scatter
   5: {
-    sapphireGlass: { x: 1.8,  y: 1.0,  z: 3.8  },
-    bezel:         { x: 1.4,  y: 0.6,  z: 2.8  },
-    hands:         { x: 0.4,  y: 0.3,  z: 2.0  },
-    dial:          { x: 0.2,  y: 0.1,  z: 1.4  },
-    gearTrain:     { x: -1.8, y: 0.8,  z: 0.6  },
-    balanceWheel:  { x: -2.4, y: 1.6,  z: 1.4  },
-    bridges:       { x: 1.6,  y: -1.0, z: 0.8  },
-    jewels:        { x: 0.2,  y: 1.8,  z: 1.6  },
+    sapphireGlass: { x: 1.8,  y: 1.0,  z: 3.8 },
+    bezel:         { x: 1.4,  y: 0.6,  z: 2.8 },
+    dialFace:      { x: 0.5,  y: 0.4,  z: 2.0 },
+    dial:          { x: 0.2,  y: 0.1,  z: 1.4 },
+    hands:         { x: 0.4,  y: 0.3,  z: 2.0 },
+    gearTrain:     { x: -1.8, y: 0.8,  z: 0.6 },
+    balanceWheel:  { x: -2.4, y: 1.6,  z: 1.4 },
+    bridges:       { x: 1.6,  y: -1.0, z: 0.8 },
+    jewels:        { x: 0.2,  y: 1.8,  z: 1.6 },
   },
 
-  // Ch6 — Full Holographic Matrix: everything scattered in 3D space
+  // Ch6 — Full holographic matrix: everything scattered in 3D space
   6: {
-    sapphireGlass: { x: 2.2,  y: 1.4,  z: 4.5  },
-    bezel:         { x: 1.8,  y: 0.9,  z: 3.2  },
-    hands:         { x: 0.8,  y: 0.5,  z: 2.4  },
-    dial:          { x: 0.4,  y: 0.2,  z: 1.6  },
-    gearTrain:     { x: -2.2, y: 1.0,  z: 0.8  },
-    balanceWheel:  { x: -2.8, y: 1.8,  z: 1.8  },
-    bridges:       { x: 2.0,  y: -1.4, z: 1.0  },
-    jewels:        { x: 0.4,  y: 2.4,  z: 2.0  },
+    sapphireGlass: { x: 2.2,  y: 1.4,  z: 4.5 },
+    bezel:         { x: 1.8,  y: 0.9,  z: 3.2 },
+    dialFace:      { x: 0.8,  y: 0.6,  z: 2.6 },
+    dial:          { x: 0.4,  y: 0.2,  z: 1.6 },
+    hands:         { x: 0.8,  y: 0.5,  z: 2.4 },
+    gearTrain:     { x: -2.2, y: 1.0,  z: 0.8 },
+    balanceWheel:  { x: -2.8, y: 1.8,  z: 1.8 },
+    bridges:       { x: 2.0,  y: -1.4, z: 1.0 },
+    jewels:        { x: 0.4,  y: 2.4,  z: 2.0 },
     mainplate:     { x: 0,    y: 0,    z: -0.6 },
     outerCase:     { x: 0,    y: -0.2, z: -1.2 },
     rotor:         { x: 0.4,  y: -0.8, z: -2.0 },
@@ -81,9 +85,10 @@ export class WatchModel {
     this.currentScheme = MATERIAL_SCHEMES[0];
     this.currentChapter = 0;
 
+    // Oscillation state for gentle hero swing
+    this.oscillationTime = 0;
+
     this.gearRotations = { seconds: 0, minutes: 0, hours: 0, balance: 0 };
-    this.autoRotate = true;
-    this.autoRotateY = 0;
 
     this.initMaterials();
     this.buildWatch();
@@ -95,6 +100,8 @@ export class WatchModel {
     this.materials.case = new THREE.MeshStandardMaterial({ color: s.caseColor, metalness: s.caseMetalness, roughness: s.caseRoughness, envMapIntensity: 3.2 });
     this.materials.bezel = new THREE.MeshStandardMaterial({ color: s.bezelColor, metalness: 0.95, roughness: 0.08, envMapIntensity: 3.5 });
     this.materials.dial = new THREE.MeshStandardMaterial({ color: s.dialColor, metalness: 0.6, roughness: 0.2, envMapIntensity: 2.0 });
+    // Solid opaque dial face — deep navy/dark base
+    this.materials.dialFace = new THREE.MeshStandardMaterial({ color: 0x0d1420, metalness: 0.4, roughness: 0.35, envMapIntensity: 1.5 });
     this.materials.glass = new THREE.MeshPhysicalMaterial({ color: 0xffffff, metalness: 0.05, roughness: 0.02, transmission: 0.94, thickness: 0.5, transparent: true, opacity: 0.22, ior: 1.77, reflectivity: 0.95 });
     this.materials.plate = new THREE.MeshStandardMaterial({ color: s.plateColor, metalness: 0.9, roughness: 0.18, envMapIntensity: 2.5 });
     this.materials.gear = new THREE.MeshStandardMaterial({ color: s.gearColor, metalness: 0.95, roughness: 0.12, envMapIntensity: 3.0 });
@@ -106,23 +113,22 @@ export class WatchModel {
   }
 
   buildWatch() {
-    this.buildStrap();
-    this.buildOuterCase();
-    this.buildMainplate();
-    this.buildGearTrain();
-    this.buildEscapementAndBalance();
-    this.buildBridges();
-    this.buildJewels();
-    this.buildRotor();
-    this.buildDialAndHands();
-    this.buildBezelAndGlass();
+    // Build order: back-to-front, so assembled state looks correct
+    this.buildStrap();       // 1. Leather strap with buckle
+    this.buildOuterCase();   // 2. Case, lugs, crown
+    this.buildMainplate();   // 3. Skeleton mainplate
+    this.buildRotor();       // 4. Rotor (BEHIND mainplate, z=-0.55)
+    this.buildGearTrain();   // 5. Gear train on mainplate
+    this.buildEscapementAndBalance(); // 6. Balance wheel
+    this.buildBridges();     // 7. Micro-bridges
+    this.buildJewels();      // 8. Ruby jewels
+    this.buildDialAndHands(); // 9. Skeleton dial ring + hands
+    this.buildDialFace();    // 10. SOLID opaque dial face (sits above ring, below glass)
+    this.buildBezelAndGlass(); // 11. Bezel + sapphire glass (topmost)
 
-    // Start with a nice 3/4 angle showing depth
-    this.group.rotation.x = 0.42;
-    this.group.rotation.y = -0.4;
-    this.group.rotation.z = 0.0;
-
-    // Center the watch
+    // Initial orientation: clean 3/4 front-facing angle
+    // Slight upward tilt so you see the face and the rim depth
+    this.group.rotation.set(0.38, -0.22, 0.0);
     this.group.position.set(0, 0, 0);
   }
 
@@ -136,65 +142,139 @@ export class WatchModel {
     this.group.add(meshOrGroup);
   }
 
-  // ─── Build Methods ──────────────────────────────────────
-
+  // ─────────────────────────────────────────────────────────────────────────
+  // 1. Leather Strap with Pin Buckle
+  // ─────────────────────────────────────────────────────────────────────────
   buildStrap() {
     const strapGroup = new THREE.Group();
-    const makeBand = (yDir) => {
+
+    const makeBand = (yDir, isTop) => {
       const pts = [];
       for (let i = 0; i <= 20; i++) {
         const t = i / 20;
-        const y = yDir * (1.45 + t * 1.7);
-        const z = -0.28 - Math.sin(t * Math.PI * 0.5) * 0.7;
+        const y = yDir * (1.42 + t * (isTop ? 1.6 : 1.0));
+        const z = -0.05 - Math.sin(t * Math.PI * 0.45) * 0.55;
         pts.push(new THREE.Vector3(0, y, z));
       }
       const curve = new THREE.CatmullRomCurve3(pts);
-      const geo = new THREE.TubeGeometry(curve, 20, 0.42, 16, false);
+      const geo = new THREE.TubeGeometry(curve, 20, 0.42, 12, false);
       const mesh = new THREE.Mesh(geo, this.materials.strap);
-      mesh.scale.set(1.4, 1, 0.22);
+      mesh.scale.set(1.35, 1, 0.28);
       return mesh;
     };
-    strapGroup.add(makeBand(1), makeBand(-1));
+
+    strapGroup.add(makeBand(1, true));   // top band
+    strapGroup.add(makeBand(-1, false)); // bottom band (shorter — has buckle)
+
+    // ── Pin Buckle at the bottom end ──
+    const buckleGroup = new THREE.Group();
+
+    // Outer rectangular frame
+    const frameShape = new THREE.Shape();
+    frameShape.moveTo(-0.5, -0.12);
+    frameShape.lineTo(0.5, -0.12);
+    frameShape.lineTo(0.5, 0.12);
+    frameShape.lineTo(-0.5, 0.12);
+    frameShape.closePath();
+    // Cut out inner opening
+    const frameHole = new THREE.Path();
+    frameHole.moveTo(-0.36, -0.07);
+    frameHole.lineTo(0.36, -0.07);
+    frameHole.lineTo(0.36, 0.07);
+    frameHole.lineTo(-0.36, 0.07);
+    frameHole.closePath();
+    frameShape.holes.push(frameHole);
+
+    const frameGeo = new THREE.ExtrudeGeometry(frameShape, { depth: 0.06, bevelEnabled: true, bevelThickness: 0.01, bevelSize: 0.01 });
+    const frameMesh = new THREE.Mesh(frameGeo, this.materials.case);
+    frameMesh.rotation.x = Math.PI / 2;
+    buckleGroup.add(frameMesh);
+
+    // Center pin bar
+    const pinGeo = new THREE.CylinderGeometry(0.025, 0.025, 0.95, 12);
+    const pinMesh = new THREE.Mesh(pinGeo, this.materials.case);
+    pinMesh.rotation.z = Math.PI / 2;
+    buckleGroup.add(pinMesh);
+
+    // Position buckle at tail end of bottom strap
+    buckleGroup.position.set(0, -2.65, -0.32);
+    strapGroup.add(buckleGroup);
+
     this.registerPart('strap', strapGroup, WATCH_PARTS.STRAP);
   }
 
+  // ─────────────────────────────────────────────────────────────────────────
+  // 2. Outer Case, Lugs, Crown
+  // ─────────────────────────────────────────────────────────────────────────
   buildOuterCase() {
     const caseGroup = new THREE.Group();
-    const caseGeo = new THREE.CylinderGeometry(1.45, 1.45, 0.4, 64, 1, true);
+
+    // Case barrel
+    const caseGeo = new THREE.CylinderGeometry(1.45, 1.45, 0.42, 64, 1, true);
     caseGroup.add(new THREE.Mesh(caseGeo, this.materials.case));
 
+    // Case back ring
     const backRing = new THREE.Mesh(new THREE.TorusGeometry(1.42, 0.06, 16, 64), this.materials.case);
-    backRing.position.z = -0.2;
+    backRing.position.z = -0.21;
     caseGroup.add(backRing);
 
+    // Case top ring
+    const topRing = new THREE.Mesh(new THREE.TorusGeometry(1.44, 0.04, 16, 64), this.materials.bezel);
+    topRing.position.z = 0.21;
+    caseGroup.add(topRing);
+
+    // Lugs — 4 elegant curved extensions
     [[-0.95, 1.42], [0.95, 1.42], [-0.95, -1.42], [0.95, -1.42]].forEach(([lx, ly]) => {
       const shape = new THREE.Shape();
-      shape.moveTo(-0.15, 0); shape.lineTo(0.15, 0);
-      shape.lineTo(0.1, 0.55); shape.lineTo(-0.1, 0.55);
+      shape.moveTo(-0.14, 0);
+      shape.lineTo(0.14, 0);
+      shape.quadraticCurveTo(0.12, 0.28, 0.08, 0.58);
+      shape.lineTo(-0.08, 0.58);
+      shape.quadraticCurveTo(-0.12, 0.28, -0.14, 0);
       shape.closePath();
-      const geo = new THREE.ExtrudeGeometry(shape, { depth: 0.2, bevelEnabled: true, bevelThickness: 0.03, bevelSize: 0.03 });
+
+      const geo = new THREE.ExtrudeGeometry(shape, { depth: 0.22, bevelEnabled: true, bevelThickness: 0.025, bevelSize: 0.025 });
       const lug = new THREE.Mesh(geo, this.materials.case);
       const isTop = ly > 0;
-      lug.position.set(lx, ly * 0.9, -0.1);
-      lug.rotation.x = isTop ? 0.35 : -0.35;
-      lug.rotation.z = lx > 0 ? -0.15 : 0.15;
+      lug.position.set(lx, ly * 0.9, -0.11);
+      lug.rotation.x = isTop ? 0.38 : -0.38;
+      lug.rotation.z = lx > 0 ? -0.12 : 0.12;
       if (!isTop) lug.rotation.x *= -1;
       caseGroup.add(lug);
     });
 
+    // Lug bar pins (horizontal pins connecting lug pairs to strap)
+    [-1, 1].forEach(side => {
+      const barGeo = new THREE.CylinderGeometry(0.04, 0.04, 1.9, 12);
+      const barMesh = new THREE.Mesh(barGeo, this.materials.case);
+      barMesh.rotation.z = Math.PI / 2;
+      barMesh.position.set(0, side * 1.45, -0.02);
+      caseGroup.add(barMesh);
+    });
+
+    // Crown (winding stem)
     const crownGroup = new THREE.Group();
-    const crown = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.22, 0.28, 32), this.materials.case);
-    crown.rotation.z = Math.PI / 2;
-    crownGroup.add(crown);
-    const crest = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 0.29, 16), this.materials.lume);
-    crest.rotation.z = Math.PI / 2;
-    crownGroup.add(crest);
-    crownGroup.position.set(1.58, 0, 0);
+    const crownGeo = new THREE.CylinderGeometry(0.22, 0.20, 0.32, 32);
+    const crownMesh = new THREE.Mesh(crownGeo, this.materials.case);
+    crownMesh.rotation.z = Math.PI / 2;
+    crownGroup.add(crownMesh);
+    // Crown grooves (decorative rings)
+    for (let i = 0; i < 5; i++) {
+      const grooveGeo = new THREE.TorusGeometry(0.21, 0.018, 8, 32);
+      const grooveMesh = new THREE.Mesh(grooveGeo, this.materials.bezel);
+      grooveMesh.rotation.y = Math.PI / 2;
+      grooveMesh.position.x = -0.08 + i * 0.04;
+      crownGroup.add(grooveMesh);
+    }
+    crownGroup.position.set(1.6, 0, 0);
     caseGroup.add(crownGroup);
 
     this.registerPart('outerCase', caseGroup, WATCH_PARTS.CASE);
   }
 
+  // ─────────────────────────────────────────────────────────────────────────
+  // 3. Skeleton Mainplate
+  // ─────────────────────────────────────────────────────────────────────────
   buildMainplate() {
     const plateGroup = new THREE.Group();
     const plateShape = new THREE.Shape();
@@ -209,8 +289,54 @@ export class WatchModel {
     this.registerPart('mainplate', plateGroup, WATCH_PARTS.MAINPLATE);
   }
 
+  // ─────────────────────────────────────────────────────────────────────────
+  // 4. Automatic Winding Rotor — FIXED: radius 0.95 (inside case profile)
+  // Positioned at z = -0.55 (safely behind mainplate, invisible from front)
+  // ─────────────────────────────────────────────────────────────────────────
+  buildRotor() {
+    const rotorGroup = new THREE.Group();
+
+    // Semi-circular oscillating weight — REDUCED RADIUS to 0.95
+    const shape = new THREE.Shape();
+    shape.absarc(0, 0, 0.95, 0, Math.PI, false); // Half disc, radius 0.95
+    const rh = new THREE.Path();
+    rh.absarc(0, 0, 0.32, 0, Math.PI, true);
+    shape.holes.push(rh);
+
+    const geo = new THREE.ExtrudeGeometry(shape, { depth: 0.07, bevelEnabled: true, bevelThickness: 0.012, bevelSize: 0.012 });
+    const rotorMesh = new THREE.Mesh(geo, this.materials.gear);
+    rotorMesh.position.z = -0.08;
+    rotorGroup.add(rotorMesh);
+
+    // Tungsten weight segment (heavier side, darker)
+    const weightShape = new THREE.Shape();
+    weightShape.absarc(0, 0, 0.92, 0, Math.PI * 0.65, false);
+    weightShape.absarc(0, 0, 0.72, Math.PI * 0.65, 0, true);
+    weightShape.closePath();
+    const weightGeo = new THREE.ExtrudeGeometry(weightShape, { depth: 0.09, bevelEnabled: false });
+    const weightMat = new THREE.MeshStandardMaterial({ color: 0x2a2a2a, metalness: 0.98, roughness: 0.05 });
+    const weightMesh = new THREE.Mesh(weightGeo, weightMat);
+    weightMesh.position.z = -0.06;
+    rotorGroup.add(weightMesh);
+
+    // Center hub
+    const hub = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.22, 0.08, 32), this.materials.case);
+    hub.rotation.x = Math.PI / 2;
+    hub.position.z = -0.06;
+    rotorGroup.add(hub);
+
+    // IMPORTANT: Start the rotor group at z = -0.55 (behind mainplate)
+    rotorGroup.position.z = -0.55;
+
+    this.registerPart('rotor', rotorGroup, WATCH_PARTS.ROTOR);
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // 5. Gear Train
+  // ─────────────────────────────────────────────────────────────────────────
   buildGearTrain() {
     const gearGroup = new THREE.Group();
+
     const createGear = (radius, teeth, thickness = 0.035) => {
       const gearShape = new THREE.Shape();
       const outer = radius, inner = radius * 0.85;
@@ -222,7 +348,8 @@ export class WatchModel {
         gearShape.lineTo(Math.cos(a3) * outer, Math.sin(a3) * outer);
         gearShape.lineTo(Math.cos(a4) * inner, Math.sin(a4) * inner);
       }
-      const hole = new THREE.Path(); hole.absarc(0, 0, radius * 0.3, 0, Math.PI * 2, true);
+      const hole = new THREE.Path();
+      hole.absarc(0, 0, radius * 0.3, 0, Math.PI * 2, true);
       gearShape.holes.push(hole);
       return new THREE.Mesh(new THREE.ExtrudeGeometry(gearShape, { depth: thickness, bevelEnabled: false }), this.materials.gear);
     };
@@ -250,6 +377,9 @@ export class WatchModel {
     this.registerPart('gearTrain', gearGroup, WATCH_PARTS.GEAR_TRAIN);
   }
 
+  // ─────────────────────────────────────────────────────────────────────────
+  // 6. Balance Wheel & Escapement
+  // ─────────────────────────────────────────────────────────────────────────
   buildEscapementAndBalance() {
     const escGroup = new THREE.Group();
     const balShape = new THREE.Shape();
@@ -257,8 +387,7 @@ export class WatchModel {
     const bh = new THREE.Path(); bh.absarc(0, 0, 0.28, 0, Math.PI * 2, true);
     balShape.holes.push(bh);
     this.balanceWheelMesh = new THREE.Mesh(new THREE.ExtrudeGeometry(balShape, { depth: 0.03, bevelEnabled: false }), this.materials.gear);
-    const spoke = new THREE.Mesh(new THREE.BoxGeometry(0.65, 0.04, 0.03), this.materials.gear);
-    this.balanceWheelMesh.add(spoke);
+    this.balanceWheelMesh.add(new THREE.Mesh(new THREE.BoxGeometry(0.65, 0.04, 0.03), this.materials.gear));
 
     for (let i = 0; i < 4; i++) {
       const angle = (i / 4) * Math.PI * 2;
@@ -269,8 +398,8 @@ export class WatchModel {
 
     const curvePoints = [];
     for (let i = 0; i < 100; i++) {
-      const t = i / 100, angle = t * Math.PI * 2 * 3.5, r = 0.05 + t * 0.2;
-      curvePoints.push(new THREE.Vector3(Math.cos(angle) * r, Math.sin(angle) * r, 0.02));
+      const t = i / 100, a = t * Math.PI * 2 * 3.5, r = 0.05 + t * 0.2;
+      curvePoints.push(new THREE.Vector3(Math.cos(a) * r, Math.sin(a) * r, 0.02));
     }
     this.balanceWheelMesh.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(curvePoints), this.materials.hairspring));
     this.balanceWheelMesh.position.set(-0.35, 0.3, 0.08);
@@ -278,9 +407,9 @@ export class WatchModel {
 
     const pf = new THREE.Group();
     pf.add(new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.04, 0.025), this.materials.escapement));
-    const rubyGeo = new THREE.BoxGeometry(0.04, 0.04, 0.04);
-    const r1 = new THREE.Mesh(rubyGeo, this.materials.jewel); r1.position.set(-0.08, 0.03, 0);
-    const r2 = new THREE.Mesh(rubyGeo, this.materials.jewel); r2.position.set(0.08, 0.03, 0);
+    const rg = new THREE.BoxGeometry(0.04, 0.04, 0.04);
+    const r1 = new THREE.Mesh(rg, this.materials.jewel); r1.position.set(-0.08, 0.03, 0);
+    const r2 = new THREE.Mesh(rg, this.materials.jewel); r2.position.set(0.08, 0.03, 0);
     pf.add(r1, r2);
     pf.position.set(-0.14, 0.52, 0.06);
     escGroup.add(pf);
@@ -288,6 +417,9 @@ export class WatchModel {
     this.registerPart('balanceWheel', escGroup, WATCH_PARTS.BALANCE_WHEEL);
   }
 
+  // ─────────────────────────────────────────────────────────────────────────
+  // 7. Skeleton Micro-Bridges
+  // ─────────────────────────────────────────────────────────────────────────
   buildBridges() {
     const bridgeGroup = new THREE.Group();
     const makeBridge = (points, zPos) => {
@@ -313,6 +445,9 @@ export class WatchModel {
     this.registerPart('bridges', bridgeGroup, WATCH_PARTS.BRIDGES);
   }
 
+  // ─────────────────────────────────────────────────────────────────────────
+  // 8. Ruby Jewel Bearings
+  // ─────────────────────────────────────────────────────────────────────────
   buildJewels() {
     const jewelGroup = new THREE.Group();
     const geo = new THREE.CylinderGeometry(0.065, 0.065, 0.035, 16);
@@ -325,23 +460,9 @@ export class WatchModel {
     this.registerPart('jewels', jewelGroup, WATCH_PARTS.JEWELS);
   }
 
-  buildRotor() {
-    const rotorGroup = new THREE.Group();
-    const shape = new THREE.Shape();
-    shape.absarc(0, 0, 1.2, 0, Math.PI, false);
-    const rh = new THREE.Path(); rh.absarc(0, 0, 0.35, 0, Math.PI, true);
-    shape.holes.push(rh);
-    const rotorMesh = new THREE.Mesh(new THREE.ExtrudeGeometry(shape, { depth: 0.06, bevelEnabled: true, bevelThickness: 0.01, bevelSize: 0.01 }), this.materials.gear);
-    rotorMesh.position.z = -0.1;
-    rotorGroup.add(rotorMesh);
-    const hub = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.25, 0.07, 32), this.materials.case);
-    hub.rotation.x = Math.PI / 2;
-    hub.position.z = -0.08;
-    rotorGroup.add(hub);
-    rotorGroup.position.z = -0.55; // Safe: behind mainplate
-    this.registerPart('rotor', rotorGroup, WATCH_PARTS.ROTOR);
-  }
-
+  // ─────────────────────────────────────────────────────────────────────────
+  // 9. Skeleton Dial Ring & Hands
+  // ─────────────────────────────────────────────────────────────────────────
   buildDialAndHands() {
     const dialGroup = new THREE.Group();
     const ringShape = new THREE.Shape();
@@ -352,6 +473,7 @@ export class WatchModel {
     dialRing.position.z = 0.15;
     dialGroup.add(dialRing);
 
+    // Hour indices on the ring
     for (let i = 0; i < 12; i++) {
       const angle = (i / 12) * Math.PI * 2;
       const isQ = i % 3 === 0;
@@ -394,18 +516,96 @@ export class WatchModel {
     this.secHandMesh.position.z = 0.28;
     handsGroup.add(this.secHandMesh);
 
+    // Center cap
+    const capGeo = new THREE.CylinderGeometry(0.08, 0.08, 0.025, 24);
+    const cap = new THREE.Mesh(capGeo, this.materials.case);
+    cap.rotation.x = Math.PI / 2;
+    cap.position.z = 0.3;
+    handsGroup.add(cap);
+
     dialGroup.add(handsGroup);
     this.registerPart('dial', dialGroup, WATCH_PARTS.DIAL);
     this.registerPart('hands', handsGroup, WATCH_PARTS.HANDS);
   }
 
+  // ─────────────────────────────────────────────────────────────────────────
+  // 10. SOLID Opaque Dial Face (NEW)
+  // This covers the skeleton movement at 0%, giving a fully assembled look.
+  // It lifts off in Chapter 2 along with the dial ring.
+  // ─────────────────────────────────────────────────────────────────────────
+  buildDialFace() {
+    const dialFaceGroup = new THREE.Group();
+
+    // Main solid disc — sits just below the hands
+    const faceGeo = new THREE.CylinderGeometry(1.28, 1.28, 0.03, 64);
+    const faceMesh = new THREE.Mesh(faceGeo, this.materials.dialFace);
+    faceMesh.rotation.x = Math.PI / 2;
+    faceMesh.position.z = 0.13; // just below hands (hands at z=0.22-0.28)
+    dialFaceGroup.add(faceMesh);
+
+    // Sunburst texture lines (decorative radial grooves)
+    const lineMat = new THREE.LineBasicMaterial({ color: 0x1a2030, transparent: true, opacity: 0.6 });
+    for (let i = 0; i < 60; i++) {
+      const angle = (i / 60) * Math.PI * 2;
+      const pts = [
+        new THREE.Vector3(Math.cos(angle) * 0.08, Math.sin(angle) * 0.08, 0.145),
+        new THREE.Vector3(Math.cos(angle) * 1.22, Math.sin(angle) * 1.22, 0.145),
+      ];
+      dialFaceGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), lineMat));
+    }
+
+    // Sub-dial circle (small seconds indicator at 6 o'clock position)
+    const subShape = new THREE.Shape();
+    subShape.absarc(0, -0.72, 0.22, 0, Math.PI * 2, false);
+    const subHole = new THREE.Path();
+    subHole.absarc(0, -0.72, 0.18, 0, Math.PI * 2, true);
+    subShape.holes.push(subHole);
+    const subGeo = new THREE.ExtrudeGeometry(subShape, { depth: 0.005, bevelEnabled: false });
+    const subDial = new THREE.Mesh(subGeo, new THREE.MeshStandardMaterial({ color: 0x1a2030, metalness: 0.3, roughness: 0.5 }));
+    subDial.position.z = 0.145;
+    dialFaceGroup.add(subDial);
+
+    // Dial logo text area (raised ridge near 12 o'clock)
+    const ridgeGeo = new THREE.BoxGeometry(0.35, 0.04, 0.006);
+    const ridgeMat = new THREE.MeshStandardMaterial({ color: s => s, metalness: 0.8, roughness: 0.2 });
+    const ridgeMesh = new THREE.Mesh(ridgeGeo, this.materials.bezel);
+    ridgeMesh.position.set(0, 0.4, 0.147);
+    dialFaceGroup.add(ridgeMesh);
+
+    // Hour markers printed on the dial face
+    const markerMat = new THREE.MeshStandardMaterial({ color: s => s, metalness: 0.85, roughness: 0.15 });
+    for (let i = 0; i < 12; i++) {
+      const angle = (i / 12) * Math.PI * 2 - Math.PI / 2;
+      const isQ = i % 3 === 0;
+      const markerGeo = new THREE.BoxGeometry(isQ ? 0.055 : 0.028, isQ ? 0.16 : 0.10, 0.008);
+      const marker = new THREE.Mesh(markerGeo, this.materials.case);
+      marker.position.set(Math.cos(angle) * 1.1, Math.sin(angle) * 1.1, 0.148);
+      marker.rotation.z = -angle - Math.PI / 2;
+      dialFaceGroup.add(marker);
+    }
+
+    // Register the solid dial face as its own part
+    const dialFaceMeta = {
+      name: 'Solid Dial Face',
+      category: 'Exterior',
+      function: 'The decorative face of the watch, hiding the movement and providing a readable surface for the hands and markers.',
+      material: 'Lacquered Brass',
+      specs: 'Sunburst Finish · Sub-Seconds Indicator'
+    };
+
+    this.registerPart('dialFace', dialFaceGroup, dialFaceMeta);
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // 11. Bezel & Sapphire Crystal Glass
+  // ─────────────────────────────────────────────────────────────────────────
   buildBezelAndGlass() {
     const bezelGroup = new THREE.Group();
     const bzShape = new THREE.Shape();
     bzShape.absarc(0, 0, 1.48, 0, Math.PI * 2, false);
     const bzH = new THREE.Path(); bzH.absarc(0, 0, 1.32, 0, Math.PI * 2, true);
     bzShape.holes.push(bzH);
-    const bezelMesh = new THREE.Mesh(new THREE.ExtrudeGeometry(bzShape, { depth: 0.15, bevelEnabled: true, bevelThickness: 0.02, bevelSize: 0.02 }), this.materials.bezel);
+    const bezelMesh = new THREE.Mesh(new THREE.ExtrudeGeometry(bzShape, { depth: 0.16, bevelEnabled: true, bevelThickness: 0.022, bevelSize: 0.022 }), this.materials.bezel);
     bezelMesh.position.z = 0.18;
     bezelGroup.add(bezelMesh);
 
@@ -414,24 +614,29 @@ export class WatchModel {
       const isMajor = i % 15 === 0;
       const dot = new THREE.Mesh(new THREE.CylinderGeometry(isMajor ? 0.025 : 0.012, isMajor ? 0.025 : 0.012, 0.015, 12), this.materials.lume);
       dot.rotation.x = Math.PI / 2;
-      dot.position.set(Math.sin(angle) * 1.4, Math.cos(angle) * 1.4, 0.34);
+      dot.position.set(Math.sin(angle) * 1.4, Math.cos(angle) * 1.4, 0.35);
       bezelGroup.add(dot);
     }
     this.registerPart('bezel', bezelGroup, WATCH_PARTS.BEZEL);
 
     const glassGroup = new THREE.Group();
-    const glassMesh = new THREE.Mesh(new THREE.CylinderGeometry(1.32, 1.32, 0.08, 64), this.materials.glass);
+    // Main glass disc
+    const glassMesh = new THREE.Mesh(new THREE.CylinderGeometry(1.32, 1.32, 0.09, 64), this.materials.glass);
     glassMesh.rotation.x = Math.PI / 2;
-    glassMesh.position.z = 0.35;
+    glassMesh.position.z = 0.36;
     glassGroup.add(glassMesh);
+    // Domed top surface
+    const domeGeo = new THREE.SphereGeometry(1.32, 64, 16, 0, Math.PI * 2, 0, 0.14);
+    const domeMesh = new THREE.Mesh(domeGeo, this.materials.glass);
+    domeMesh.position.z = 0.36;
+    glassGroup.add(domeMesh);
+
     this.registerPart('sapphireGlass', glassGroup, WATCH_PARTS.SAPPHIRE_GLASS);
   }
 
-  // ─────────────────────────────────────────────────────────────────
-  // CHAPTER-DRIVEN EXPLOSION ENGINE
-  // Called when entering a chapter. Smoothly tweens each part to
-  // its target position for that chapter.
-  // ─────────────────────────────────────────────────────────────────
+  // ─────────────────────────────────────────────────────────────────────────
+  // CHAPTER ENGINE — Tweens all parts to target positions
+  // ─────────────────────────────────────────────────────────────────────────
   explodeToChapter(chapterIndex, duration = 1.6) {
     this.currentChapter = chapterIndex;
     const targets = CHAPTER_TARGETS[chapterIndex] || {};
@@ -440,12 +645,10 @@ export class WatchModel {
       const assembled = partGroup.userData.assembled;
       const target = targets[id];
 
-      const tx = assembled.x + (target ? target.x : 0);
-      const ty = assembled.y + (target ? target.y : 0);
-      const tz = assembled.z + (target ? target.z : 0);
-
       gsap.to(partGroup.position, {
-        x: tx, y: ty, z: tz,
+        x: assembled.x + (target ? target.x : 0),
+        y: assembled.y + (target ? target.y : 0),
+        z: assembled.z + (target ? target.z : 0),
         duration,
         ease: 'power2.inOut',
         overwrite: 'auto'
@@ -453,12 +656,11 @@ export class WatchModel {
     });
   }
 
-  // Manual slider control (0..1 maps across all 6 chapters)
+  // Manual slider (maps 0..1 across 6 chapters)
   explodeByProgress(progress) {
-    // Map 0..1 to 0..6 chapters
     const totalChapters = 6;
     const chapterFloat = progress * totalChapters;
-    const chapter = Math.min(Math.floor(chapterFloat), totalChapters);
+    const chapter = Math.min(Math.floor(chapterFloat), totalChapters - 1);
     const chapterProgress = chapterFloat - Math.floor(chapterFloat);
 
     const startTargets = CHAPTER_TARGETS[chapter] || {};
@@ -466,21 +668,20 @@ export class WatchModel {
 
     Object.entries(this.parts).forEach(([id, partGroup]) => {
       const assembled = partGroup.userData.assembled;
+      const sT = startTargets[id] || { x: 0, y: 0, z: 0 };
+      const eT = endTargets[id] || { x: 0, y: 0, z: 0 };
 
-      const sTarget = startTargets[id] || { x: 0, y: 0, z: 0 };
-      const eTarget = endTargets[id] || { x: 0, y: 0, z: 0 };
-
-      const tx = assembled.x + sTarget.x + (eTarget.x - sTarget.x) * chapterProgress;
-      const ty = assembled.y + sTarget.y + (eTarget.y - sTarget.y) * chapterProgress;
-      const tz = assembled.z + sTarget.z + (eTarget.z - sTarget.z) * chapterProgress;
-
-      partGroup.position.set(tx, ty, tz);
+      partGroup.position.set(
+        assembled.x + sT.x + (eT.x - sT.x) * chapterProgress,
+        assembled.y + sT.y + (eT.y - sT.y) * chapterProgress,
+        assembled.z + sT.z + (eT.z - sT.z) * chapterProgress
+      );
     });
   }
 
-  // ─────────────────────────────────────────────────────────────────
-  // KINEMATIC SIMULATION
-  // ─────────────────────────────────────────────────────────────────
+  // ─────────────────────────────────────────────────────────────────────────
+  // KINEMATIC SIMULATION (called every frame)
+  // ─────────────────────────────────────────────────────────────────────────
   updateKinematics(delta) {
     this.gearRotations.balance += delta * 25;
     if (this.balanceWheelMesh) this.balanceWheelMesh.rotation.z = Math.sin(this.gearRotations.balance) * 0.8;
@@ -497,6 +698,9 @@ export class WatchModel {
     if (this.fourthGear) this.fourthGear.rotation.z = this.gearRotations.seconds * 4;
   }
 
+  // ─────────────────────────────────────────────────────────────────────────
+  // MATERIAL SCHEME SWITCHER
+  // ─────────────────────────────────────────────────────────────────────────
   applyMaterialScheme(scheme) {
     this.currentScheme = scheme;
     this.materials.case.color.setHex(scheme.caseColor);

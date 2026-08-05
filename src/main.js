@@ -20,11 +20,11 @@ const CHAPTERS = [
     title: 'The Art of Mechanical Precision',
     body: 'A single mechanical watch contains over 200 hand-finished components — each one indispensable. This masterpiece is crafted to endure for centuries, powered by nothing but the human wrist.',
     tags: ['28,800 VPH', 'Swiss Lever Escapement'],
-    camera: { x: 0,    y: 1.5,  z: 7.5  },
-    lookAt: { x: 0,    y: 0,    z: 0    },
-    watchRot: { x: 0.42, y: -0.4, z: 0.0 },
+    camera: { x: 0.2,  y: 1.2,  z: 7.0  },
+    lookAt: { x: 0,    y: -0.1, z: 0    },
+    watchRot: { x: 0.38, y: -0.22, z: 0.0 },
     watchPos: { x: 0,    y: 0,    z: 0   },
-    autoRotate: true,
+    autoRotate: true,   // gentle oscillation, not full spin
   },
   {
     num: '02',
@@ -90,7 +90,7 @@ const CHAPTERS = [
     lookAt: { x: 0,    y: 0.5,  z: 0    },
     watchRot: { x: 0.5,  y: -0.5, z: 0.08 },
     watchPos: { x: 0,    y: 0,    z: 0   },
-    autoRotate: true,
+    autoRotate: true,   // gentle oscillation in final holographic view
   },
 ];
 
@@ -104,6 +104,7 @@ class HorologiaApp {
 
     this.currentChapter = 0;
     this.lastTime = performance.now();
+    this.oscillationTime = 0;   // For gentle hero/final chapter ±15° swing
     this.manualControl = false; // True when user drags the explode slider
 
     this.initSmoothScroll();
@@ -461,10 +462,12 @@ class HorologiaApp {
     const now = performance.now();
     const delta = Math.min((now - this.lastTime) / 1000, 0.05);
     this.lastTime = now;
+    this.oscillationTime += delta;
 
-    // Auto-rotate watch group (only in hero and final chapter)
+    // Gentle ±15° oscillating swing (not full spin — always shows front face)
     if (this.watchModel.autoRotate) {
-      this.watchModel.group.rotation.y += delta * 0.18;
+      const baseY = CHAPTERS[this.currentChapter].watchRot.y;
+      this.watchModel.group.rotation.y = baseY + Math.sin(this.oscillationTime * 0.45) * 0.26;
     }
 
     this.watchModel.updateKinematics(delta);
