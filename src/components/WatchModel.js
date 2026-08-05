@@ -238,14 +238,14 @@ export class WatchModel {
       const isTop = ly > 0;
       lug.position.set(lx, ly, -0.11);
       
-      // All lugs tilt backwards towards the wrist
-      lug.rotation.x = 0.38; 
-      
+      // Correct Euler rotation (Z applied first, then X)
       if (isTop) {
-        // Top lugs point up, splay left/right
+        // Top lugs point up. To tilt backwards (inward), X rotation must be negative.
+        lug.rotation.x = -0.38;
         lug.rotation.z = lx > 0 ? -0.12 : 0.12;
       } else {
-        // Bottom lugs must be rotated 180deg (Math.PI) to point DOWN instead of UP!
+        // Bottom lugs point down (Z rotated by PI). To tilt backwards (inward), X rotation must be positive.
+        lug.rotation.x = 0.38;
         lug.rotation.z = lx > 0 ? (Math.PI + 0.12) : (Math.PI - 0.12);
       }
       
