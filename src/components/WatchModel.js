@@ -290,17 +290,17 @@ export class WatchModel {
   }
 
   // ─────────────────────────────────────────────────────────────────────────
-  // 4. Automatic Winding Rotor — FIXED: radius 0.95 (inside case profile)
-  // Positioned at z = -0.55 (safely behind mainplate, invisible from front)
+  // 4. Automatic Winding Rotor
+  // Radius 0.88 — stays within case barrel at any tilt angle
+  // z = -0.72 — fully behind mainplate, never visible from front
   // ─────────────────────────────────────────────────────────────────────────
   buildRotor() {
     const rotorGroup = new THREE.Group();
 
-    // Semi-circular oscillating weight — REDUCED RADIUS to 0.95
     const shape = new THREE.Shape();
-    shape.absarc(0, 0, 0.95, 0, Math.PI, false); // Half disc, radius 0.95
+    shape.absarc(0, 0, 0.88, 0, Math.PI, false);
     const rh = new THREE.Path();
-    rh.absarc(0, 0, 0.32, 0, Math.PI, true);
+    rh.absarc(0, 0, 0.30, 0, Math.PI, true);
     shape.holes.push(rh);
 
     const geo = new THREE.ExtrudeGeometry(shape, { depth: 0.07, bevelEnabled: true, bevelThickness: 0.012, bevelSize: 0.012 });
@@ -308,10 +308,9 @@ export class WatchModel {
     rotorMesh.position.z = -0.08;
     rotorGroup.add(rotorMesh);
 
-    // Tungsten weight segment (heavier side, darker)
     const weightShape = new THREE.Shape();
-    weightShape.absarc(0, 0, 0.92, 0, Math.PI * 0.65, false);
-    weightShape.absarc(0, 0, 0.72, Math.PI * 0.65, 0, true);
+    weightShape.absarc(0, 0, 0.85, 0, Math.PI * 0.65, false);
+    weightShape.absarc(0, 0, 0.66, Math.PI * 0.65, 0, true);
     weightShape.closePath();
     const weightGeo = new THREE.ExtrudeGeometry(weightShape, { depth: 0.09, bevelEnabled: false });
     const weightMat = new THREE.MeshStandardMaterial({ color: 0x2a2a2a, metalness: 0.98, roughness: 0.05 });
@@ -319,15 +318,12 @@ export class WatchModel {
     weightMesh.position.z = -0.06;
     rotorGroup.add(weightMesh);
 
-    // Center hub
-    const hub = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.22, 0.08, 32), this.materials.case);
+    const hub = new THREE.Mesh(new THREE.CylinderGeometry(0.20, 0.20, 0.08, 32), this.materials.case);
     hub.rotation.x = Math.PI / 2;
     hub.position.z = -0.06;
     rotorGroup.add(hub);
 
-    // IMPORTANT: Start the rotor group at z = -0.55 (behind mainplate)
-    rotorGroup.position.z = -0.55;
-
+    rotorGroup.position.z = -0.72;
     this.registerPart('rotor', rotorGroup, WATCH_PARTS.ROTOR);
   }
 

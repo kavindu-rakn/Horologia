@@ -8,7 +8,7 @@ import { MATERIAL_SCHEMES } from './utils/constants.js';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import Lenis from 'lenis';
-import confetti from 'canvas-confetti';
+// confetti removed — not appropriate for a luxury watch experience
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -31,10 +31,12 @@ const CHAPTERS = [
     title: 'Domed Sapphire Crystal & Ceramic Bezel',
     body: 'Synthetic corundum — 9 Mohs hardness, second only to diamond. The domed sapphire crystal refracts light across the movement, while the ceramic bezel resists scratches and corrosion permanently.',
     tags: ['Al₂O₃ Corundum', 'Anti-Reflective Coating', '9H Hardness'],
-    camera: { x: 0,    y: 2.8,  z: 5.2  },
-    lookAt: { x: 0,    y: 0.5,  z: 0.8  },
-    watchRot: { x: 0.85, y: -0.15, z: 0.0 },
-    watchPos: { x: 0.4,  y: -0.2,  z: 0   },
+    // Camera moves slightly forward and above, looking at the lifted glass
+    camera: { x: 0.5,  y: 2.2,  z: 6.2  },
+    lookAt: { x: 0,    y: 0.3,  z: 0.5  },
+    // Gentle 3/4 tilt — still shows the watch face clearly
+    watchRot: { x: 0.52, y: -0.18, z: 0.0 },
+    watchPos: { x: 0.2,  y: 0,    z: 0   },
     autoRotate: false,
   },
   {
@@ -42,10 +44,12 @@ const CHAPTERS = [
     title: 'Skeleton Dial & Luminescent Hands',
     body: 'The skeletonized dial ring reveals the movement beneath. Each hand is finished with SuperLumiNova C3 lume — glowing for up to 8 hours in complete darkness, charged by ambient light.',
     tags: ['SuperLumiNova C3', 'Beveled Indexes', 'Open-Worked Movement'],
-    camera: { x: 0,    y: 5.5,  z: 3.0  },
-    lookAt: { x: 0,    y: 0.5,  z: 0.5  },
-    watchRot: { x: 1.35, y: 0.05, z: 0.0 },
-    watchPos: { x: 0,    y: -0.5,  z: 0   },
+    // Pull camera high + slightly behind to see dial face from above without flipping
+    camera: { x: 0,    y: 4.2,  z: 5.0  },
+    lookAt: { x: 0,    y: 0.4,  z: 0    },
+    // 55° tilt looking down at dial face — not 77° (which flips the watch)
+    watchRot: { x: 0.95, y: 0.0,  z: 0.0 },
+    watchPos: { x: 0,    y: -0.3, z: 0   },
     autoRotate: false,
   },
   {
@@ -104,13 +108,17 @@ class HorologiaApp {
 
     this.currentChapter = 0;
     this.lastTime = performance.now();
-    this.oscillationTime = 0;   // For gentle hero/final chapter ±15° swing
-    this.manualControl = false; // True when user drags the explode slider
+    this.oscillationTime = 0;    // For gentle hero/final chapter ±15° swing
+    this.manualControl = false;  // True when user drags the explode slider
+    this.isDragging = false;     // True when user drag-rotates the watch
+    this.dragStart = { x: 0, y: 0 };
+    this.dragRotStart = { x: 0, y: 0 };
 
     this.initSmoothScroll();
     this.initChapterEngine();
     this.initRaycaster();
     this.initUI();
+    this.initDragRotate();   // ← drag-to-inspect any angle
     this.initMaterialLab();
     this.initShowcaseGallery();
     this.initFirebaseGuide();
@@ -238,13 +246,6 @@ class HorologiaApp {
 
     // 7. Play sound
     if (animate) soundEngine.playRatchetWinding();
-
-    // 8. Confetti on final chapter
-    if (index === 6 && animate) {
-      setTimeout(() => {
-        confetti({ particleCount: 60, spread: 70, origin: { y: 0.5 } });
-      }, 800);
-    }
   }
 
   updateChapterCard(index, animate) {
@@ -385,7 +386,12 @@ class HorologiaApp {
       await this.firebaseManager.saveDesign({ title, creator, description: desc, schemeId: this.watchModel.currentScheme.id });
       saveModal.classList.remove('open');
       saveForm.reset();
-      confetti({ particleCount: 80, spread: 70, origin: { y: 0.6 } });
+      // Saved — subtle notification without confetti
+      const card = document.getElementById('chapter-card');
+      if (card) {
+        card.style.boxShadow = '0 0 40px rgba(201, 164, 74, 0.6)';
+        setTimeout(() => { card.style.boxShadow = ''; }, 1200);
+      }
     });
   }
 
@@ -453,6 +459,52 @@ class HorologiaApp {
         else alert('⚠️ Invalid Firebase config.');
       } catch { alert('⚠️ Invalid JSON format.'); }
     });
+  }
+
+  // ── Drag-to-Rotate — lets user inspect back/sides by dragging the canvas ──
+  // Left-click drag rotates the watch freely in X and Y.
+  // Drag is ignored when over any UI element (chapter card, HUD, header).
+  initDragRotate() {
+    const canvas = this.container;
+
+    const isOverUI = (e) => {
+      const uiIds = ['chapter-card', 'explode-hud', 'site-header', 'chapter-dots', 'part-inspector', 'material-lab'];
+      return uiIds.some(id => document.getElementById(id)?.contains(e.target));
+    };
+
+    canvas.addEventListener('pointerdown', (e) => {
+      if (e.button !== 0 || isOverUI(e)) return;
+      this.isDragging = true;
+      this.dragStart = { x: e.clientX, y: e.clientY };
+      this.dragRotStart = {
+        x: this.watchModel.group.rotation.x,
+        y: this.watchModel.group.rotation.y,
+      };
+      // Pause oscillation and chapter rotation while dragging
+      this.watchModel.autoRotate = false;
+      canvas.style.cursor = 'grabbing';
+      e.preventDefault();
+    });
+
+    window.addEventListener('pointermove', (e) => {
+      if (!this.isDragging) return;
+      const dx = (e.clientX - this.dragStart.x) * 0.008;
+      const dy = (e.clientY - this.dragStart.y) * 0.008;
+      this.watchModel.group.rotation.y = this.dragRotStart.y + dx;
+      this.watchModel.group.rotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2,
+        this.dragRotStart.x + dy
+      ));
+    });
+
+    window.addEventListener('pointerup', () => {
+      if (!this.isDragging) return;
+      this.isDragging = false;
+      canvas.style.cursor = 'grab';
+      // Re-enable chapter auto-rotate if applicable
+      this.watchModel.autoRotate = CHAPTERS[this.currentChapter].autoRotate;
+    });
+
+    canvas.style.cursor = 'grab';
   }
 
   // ── Render Loop ──────────────────────────────────────────────────────────
