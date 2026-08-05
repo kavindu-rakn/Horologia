@@ -68,7 +68,7 @@ class HorologiaApp {
       }
     });
 
-    // Gentle face-forward 3D angle (never turns sideways)
+    // Dramatic 3/4 Isometric Perspective Rotation Timeline
     const tl = gsap.timeline({
       scrollTrigger: {
         trigger: '.scroll-container',
@@ -78,10 +78,10 @@ class HorologiaApp {
       }
     });
 
-    tl.to(this.watchModel.group.rotation, { x: 0.18, y: -0.25, z: 0.05 }, 0)
-      .to(this.watchModel.group.rotation, { x: 0.25, y: -0.35, z: -0.05 }, 0.3)
-      .to(this.watchModel.group.rotation, { x: 0.12, y: -0.15, z: 0.08 }, 0.6)
-      .to(this.watchModel.group.rotation, { x: 0.2, y: -0.3, z: 0 }, 1.0);
+    tl.to(this.watchModel.group.rotation, { x: 0.52, y: -0.55, z: 0.12 }, 0)
+      .to(this.watchModel.group.rotation, { x: 0.65, y: -0.75, z: 0.2 }, 0.3)
+      .to(this.watchModel.group.rotation, { x: 0.45, y: -0.35, z: 0.05 }, 0.6)
+      .to(this.watchModel.group.rotation, { x: 0.6, y: -0.65, z: 0.15 }, 1.0);
   }
 
   updateExplosion(val) {

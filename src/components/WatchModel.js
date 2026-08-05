@@ -30,7 +30,7 @@ export class WatchModel {
       color: s.caseColor,
       metalness: s.caseMetalness,
       roughness: s.caseRoughness,
-      envMapIntensity: 3.0
+      envMapIntensity: 3.2
     });
 
     this.materials.bezel = new THREE.MeshStandardMaterial({
@@ -125,9 +125,10 @@ export class WatchModel {
     const isDesktop = window.innerWidth > 900;
     this.group.position.set(isDesktop ? 1.1 : 0, 0, 0);
 
-    // Elegant 3D angle (pitch 12°, yaw -18°)
-    this.group.rotation.x = 0.2;
-    this.group.rotation.y = -0.3;
+    // Dramatic 3/4 Isometric Perspective Angle
+    this.group.rotation.x = 0.52;
+    this.group.rotation.y = -0.55;
+    this.group.rotation.z = 0.12;
   }
 
   registerPart(id, meshOrGroup, partMeta, explodeVec) {
@@ -142,56 +143,52 @@ export class WatchModel {
     this.group.add(meshOrGroup);
   }
 
-  // --- 1. Curved Leather / Rubber Strap ---
+  // --- 1. Curved Leather Strap ---
   buildStrap() {
     const strapGroup = new THREE.Group();
 
-    // Top Strap Segment (Curving backwards)
     const topPoints = [];
     for (let i = 0; i <= 20; i++) {
       const t = i / 20;
       const y = 1.45 + t * 1.6;
-      const z = -0.15 - Math.sin(t * Math.PI * 0.5) * 0.8;
+      const z = -0.3 - Math.sin(t * Math.PI * 0.5) * 0.8;
       topPoints.push(new THREE.Vector3(0, y, z));
     }
     const topCurve = new THREE.CatmullRomCurve3(topPoints);
     const topGeo = new THREE.TubeGeometry(topCurve, 20, 0.42, 16, false);
     const topStrap = new THREE.Mesh(topGeo, this.materials.strap);
-    topStrap.scale.set(1.5, 1, 0.3); // Flatten to strap profile
+    topStrap.scale.set(1.4, 1, 0.25);
 
-    // Bottom Strap Segment
     const bottomPoints = [];
     for (let i = 0; i <= 20; i++) {
       const t = i / 20;
       const y = -1.45 - t * 1.6;
-      const z = -0.15 - Math.sin(t * Math.PI * 0.5) * 0.8;
+      const z = -0.3 - Math.sin(t * Math.PI * 0.5) * 0.8;
       bottomPoints.push(new THREE.Vector3(0, y, z));
     }
     const bottomCurve = new THREE.CatmullRomCurve3(bottomPoints);
     const bottomGeo = new THREE.TubeGeometry(bottomCurve, 20, 0.42, 16, false);
     const bottomStrap = new THREE.Mesh(bottomGeo, this.materials.strap);
-    bottomStrap.scale.set(1.5, 1, 0.3);
+    bottomStrap.scale.set(1.4, 1, 0.25);
 
     strapGroup.add(topStrap, bottomStrap);
-    this.registerPart('strap', strapGroup, WATCH_PARTS.STRAP, new THREE.Vector3(0, 0, -1.0));
+    // Orbital explode offset: Back & Down
+    this.registerPart('strap', strapGroup, WATCH_PARTS.STRAP, new THREE.Vector3(0, -0.4, -1.2));
   }
 
-  // --- 2. Outer Case & Seamless Tapered Lugs ---
+  // --- 2. Outer Case & Sleek Lugs ---
   buildOuterCase() {
     const caseGroup = new THREE.Group();
 
-    // Main Case Ring (Radius 1.45)
     const caseGeo = new THREE.CylinderGeometry(1.45, 1.45, 0.4, 64, 1, true);
     const caseMesh = new THREE.Mesh(caseGeo, this.materials.case);
     caseGroup.add(caseMesh);
 
-    // Beveled Case Back Ring
     const backRingGeo = new THREE.TorusGeometry(1.42, 0.06, 16, 64);
     const backRing = new THREE.Mesh(backRingGeo, this.materials.case);
     backRing.position.z = -0.2;
     caseGroup.add(backRing);
 
-    // 4 Seamless Curved Lugs extending outward from case perimeter
     const lugPositions = [
       [-0.95, 1.42, 0], [0.95, 1.42, 0],
       [-0.95, -1.42, 0], [0.95, -1.42, 0]
@@ -218,7 +215,6 @@ export class WatchModel {
       caseGroup.add(lug);
     });
 
-    // Crown & Knurled Stem
     const crownGroup = new THREE.Group();
     const crownGeo = new THREE.CylinderGeometry(0.22, 0.22, 0.28, 32);
     const crownMesh = new THREE.Mesh(crownGeo, this.materials.case);
@@ -233,7 +229,8 @@ export class WatchModel {
     crownGroup.position.set(1.58, 0, 0);
     caseGroup.add(crownGroup);
 
-    this.registerPart('outerCase', caseGroup, WATCH_PARTS.CASE, new THREE.Vector3(0, 0, -0.7));
+    // Orbital explode offset: Back & Right
+    this.registerPart('outerCase', caseGroup, WATCH_PARTS.CASE, new THREE.Vector3(0.3, 0, -0.8));
   }
 
   // --- 3. Skeleton Mainplate ---
@@ -243,7 +240,6 @@ export class WatchModel {
     const plateShape = new THREE.Shape();
     plateShape.absarc(0, 0, 1.35, 0, Math.PI * 2, false);
 
-    // Circular perlage cutouts
     const hole1 = new THREE.Path();
     hole1.absarc(-0.4, 0.35, 0.45, 0, Math.PI * 2, true);
     const hole2 = new THREE.Path();
@@ -255,7 +251,7 @@ export class WatchModel {
     plateMesh.position.z = -0.18;
     plateGroup.add(plateMesh);
 
-    this.registerPart('mainplate', plateGroup, WATCH_PARTS.MAINPLATE, new THREE.Vector3(0, 0, -0.45));
+    this.registerPart('mainplate', plateGroup, WATCH_PARTS.MAINPLATE, new THREE.Vector3(0, 0, -0.4));
   }
 
   // --- 4. Gear Train ---
@@ -312,14 +308,14 @@ export class WatchModel {
     this.escapeGear.position.set(0.1, 0.6, -0.03);
     gearGroup.add(this.escapeGear);
 
-    this.registerPart('gearTrain', gearGroup, WATCH_PARTS.GEAR_TRAIN, new THREE.Vector3(0, 0, -0.2));
+    // Orbital explode offset: Upper-Left diagonal
+    this.registerPart('gearTrain', gearGroup, WATCH_PARTS.GEAR_TRAIN, new THREE.Vector3(-0.4, 0.3, -0.1));
   }
 
   // --- 5. Escapement & Balance Wheel ---
   buildEscapementAndBalance() {
     const escGroup = new THREE.Group();
 
-    // Balance Wheel Ring
     const balShape = new THREE.Shape();
     balShape.absarc(0, 0, 0.35, 0, Math.PI * 2, false);
     const balHole = new THREE.Path();
@@ -341,7 +337,6 @@ export class WatchModel {
       this.balanceWheelMesh.add(screw);
     }
 
-    // Coiled Hairspring
     const curvePoints = [];
     const coils = 3.5;
     for (let i = 0; i < 100; i++) {
@@ -357,7 +352,6 @@ export class WatchModel {
     this.balanceWheelMesh.position.set(-0.35, 0.3, 0.08);
     escGroup.add(this.balanceWheelMesh);
 
-    // Pallet Fork
     const palletFork = new THREE.Group();
     const forkBodyGeo = new THREE.BoxGeometry(0.18, 0.04, 0.025);
     const forkBody = new THREE.Mesh(forkBodyGeo, this.materials.escapement);
@@ -373,14 +367,14 @@ export class WatchModel {
     palletFork.position.set(-0.14, 0.52, 0.06);
     escGroup.add(palletFork);
 
-    this.registerPart('balanceWheel', escGroup, WATCH_PARTS.BALANCE_WHEEL, new THREE.Vector3(0, 0, 0.15));
+    // Orbital explode offset: Left & Up
+    this.registerPart('balanceWheel', escGroup, WATCH_PARTS.BALANCE_WHEEL, new THREE.Vector3(-0.6, 0.4, 0.3));
   }
 
-  // --- 6. Architectural Skeleton Micro-Bridges (LEAVING CENTER FULLY OPEN) ---
+  // --- 6. Architectural Skeleton Micro-Bridges ---
   buildBridges() {
     const bridgeGroup = new THREE.Group();
 
-    // 1. Balance Cock Finger Bridge (Top-Left corner)
     const balBridgeShape = new THREE.Shape();
     balBridgeShape.moveTo(-0.6, 0.45);
     balBridgeShape.lineTo(-0.15, 0.45);
@@ -393,7 +387,6 @@ export class WatchModel {
     balBridge.position.z = -0.12;
     bridgeGroup.add(balBridge);
 
-    // 2. Gear Train Micro-Bridge (Bottom-Right corner)
     const gearBridgeShape = new THREE.Shape();
     gearBridgeShape.moveTo(0.15, -0.45);
     gearBridgeShape.lineTo(0.55, -0.2);
@@ -405,7 +398,6 @@ export class WatchModel {
     gearBridge.position.z = -0.12;
     bridgeGroup.add(gearBridge);
 
-    // Blue Screws on bridges
     const screwGeo = new THREE.CylinderGeometry(0.035, 0.035, 0.03, 16);
     const screwMat = new THREE.MeshStandardMaterial({ color: 0x1e90ff, metalness: 0.9, roughness: 0.1 });
 
@@ -416,7 +408,8 @@ export class WatchModel {
       bridgeGroup.add(s);
     });
 
-    this.registerPart('bridges', bridgeGroup, WATCH_PARTS.BRIDGES, new THREE.Vector3(0, 0, 0.35));
+    // Orbital explode offset: Right & Down
+    this.registerPart('bridges', bridgeGroup, WATCH_PARTS.BRIDGES, new THREE.Vector3(0.5, -0.3, 0.5));
   }
 
   // --- 7. Synthetic Ruby Jewels ---
@@ -440,10 +433,11 @@ export class WatchModel {
       jewelGroup.add(j);
     });
 
-    this.registerPart('jewels', jewelGroup, WATCH_PARTS.JEWELS, new THREE.Vector3(0, 0, 0.55));
+    // Orbital explode offset: Upward float
+    this.registerPart('jewels', jewelGroup, WATCH_PARTS.JEWELS, new THREE.Vector3(0, 0.5, 0.7));
   }
 
-  // --- 8. Automatic Rotor ---
+  // --- 8. Automatic Winding Rotor (POSITIONED SAFELY IN BACK AT Z = -0.55) ---
   buildRotor() {
     const rotorGroup = new THREE.Group();
 
@@ -455,19 +449,23 @@ export class WatchModel {
 
     const geo = new THREE.ExtrudeGeometry(shape, { depth: 0.06, bevelEnabled: true, bevelThickness: 0.01, bevelSize: 0.01 });
     const rotorMesh = new THREE.Mesh(geo, this.materials.gear);
-    rotorMesh.position.z = -0.32;
+    rotorMesh.position.z = -0.1; // Back side of hub
     rotorGroup.add(rotorMesh);
 
     const hubGeo = new THREE.CylinderGeometry(0.25, 0.25, 0.07, 32);
     const hubMesh = new THREE.Mesh(hubGeo, this.materials.case);
     hubMesh.rotation.x = Math.PI / 2;
-    hubMesh.position.z = -0.3;
+    hubMesh.position.z = -0.08;
     rotorGroup.add(hubMesh);
 
-    this.registerPart('rotor', rotorGroup, WATCH_PARTS.ROTOR, new THREE.Vector3(0, 0, -1.3));
+    // Initial position SAFELY BEHIND mainplate (Z = -0.55)
+    rotorGroup.position.z = -0.55;
+
+    // Orbital explode offset: Far Back (-Z) & Down
+    this.registerPart('rotor', rotorGroup, WATCH_PARTS.ROTOR, new THREE.Vector3(0, -0.4, -1.3));
   }
 
-  // --- 9. Skeleton Dial & Hands (CLEAN FRONT UNMODIFIED FACE) ---
+  // --- 9. Skeleton Dial & Hands ---
   buildDialAndHands() {
     const dialGroup = new THREE.Group();
 
@@ -551,8 +549,9 @@ export class WatchModel {
 
     dialGroup.add(handsGroup);
 
-    this.registerPart('dial', dialGroup, WATCH_PARTS.DIAL, new THREE.Vector3(0, 0, 0.75));
-    this.registerPart('hands', handsGroup, WATCH_PARTS.HANDS, new THREE.Vector3(0, 0, 1.0));
+    // Orbital explode offset: Forward & Slight Left
+    this.registerPart('dial', dialGroup, WATCH_PARTS.DIAL, new THREE.Vector3(-0.2, 0.1, 0.85));
+    this.registerPart('hands', handsGroup, WATCH_PARTS.HANDS, new THREE.Vector3(-0.25, 0.15, 1.15));
   }
 
   // --- 10. Bezel & Sapphire Glass ---
@@ -580,7 +579,8 @@ export class WatchModel {
       bezelGroup.add(dotMesh);
     }
 
-    this.registerPart('bezel', bezelGroup, WATCH_PARTS.BEZEL, new THREE.Vector3(0, 0, 1.25));
+    // Orbital explode offset: Forward & Upward
+    this.registerPart('bezel', bezelGroup, WATCH_PARTS.BEZEL, new THREE.Vector3(0.2, 0.3, 1.45));
 
     const glassGroup = new THREE.Group();
     const glassGeo = new THREE.CylinderGeometry(1.32, 1.32, 0.08, 64);
@@ -589,7 +589,8 @@ export class WatchModel {
     glassMesh.position.z = 0.35;
     glassGroup.add(glassMesh);
 
-    this.registerPart('sapphireGlass', glassGroup, WATCH_PARTS.SAPPHIRE_GLASS, new THREE.Vector3(0, 0, 1.45));
+    // Orbital explode offset: Forwardmost & Upward
+    this.registerPart('sapphireGlass', glassGroup, WATCH_PARTS.SAPPHIRE_GLASS, new THREE.Vector3(0.35, 0.45, 1.85));
   }
 
   // --- Exploded Assembly Progress (0.0 to 1.0) ---
@@ -600,6 +601,7 @@ export class WatchModel {
       const explodeVec = partGroup.userData.explodeVector;
       const initialPos = partGroup.userData.initialPos;
 
+      // 3D Orbital Separation along X, Y, and Z
       partGroup.position.x = initialPos.x + explodeVec.x * p;
       partGroup.position.y = initialPos.y + explodeVec.y * p;
       partGroup.position.z = initialPos.z + explodeVec.z * p;
