@@ -352,7 +352,7 @@ class HorologiaApp {
 
     presetContainer.innerHTML = MATERIAL_SCHEMES.map(s => `
       <div class="preset-card ${s.id === this.watchModel.currentScheme.id ? 'active' : ''}" data-scheme-id="${s.id}">
-        <div class="preset-color-swatch" style="background: #${s.caseColor.toString(16).padStart(6, '0')}"></div>
+        <div class="preset-color-swatch" style="background: linear-gradient(135deg, #${s.caseColor.toString(16).padStart(6, '0')} 50%, #${s.secondaryColor.toString(16).padStart(6, '0')} 50%)"></div>
         <div class="preset-info"><h4>${s.name}</h4><p>${s.tagline}</p></div>
       </div>
     `).join('');
