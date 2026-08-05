@@ -557,14 +557,13 @@ export class WatchModel {
     dialFaceGroup.add(ridgeMesh);
 
     // Hour markers printed on the dial face
-    const markerMat = new THREE.MeshStandardMaterial({ color: 0xc0c0c0, metalness: 0.85, roughness: 0.15 });
     for (let i = 0; i < 12; i++) {
-      const angle = (i / 12) * Math.PI * 2 - Math.PI / 2;
+      const angle = (i / 12) * Math.PI * 2;
       const isQ = i % 3 === 0;
-      const markerGeo = new THREE.BoxGeometry(isQ ? 0.055 : 0.028, isQ ? 0.16 : 0.10, 0.008);
-      const marker = new THREE.Mesh(markerGeo, markerMat);
-      marker.position.set(Math.cos(angle) * 1.1, Math.sin(angle) * 1.1, 0.165);
-      marker.rotation.z = -angle - Math.PI / 2;
+      const markerGeo = new THREE.BoxGeometry(isQ ? 0.055 : 0.03, isQ ? 0.16 : 0.10, 0.015);
+      const marker = new THREE.Mesh(markerGeo, this.materials.case);
+      marker.position.set(Math.sin(angle) * 1.1, Math.cos(angle) * 1.1, 0.18);
+      marker.rotation.z = -angle;
       dialFaceGroup.add(marker);
     }
 

@@ -145,16 +145,12 @@ class HorologiaApp {
   // ── 7-Chapter Scroll Engine ───────────────────────────────────────────────
   initChapterEngine() {
     const totalChapters = CHAPTERS.length; // 7
-    const chapterHeight = 100; // Each chapter = 100vh
 
     CHAPTERS.forEach((chapter, index) => {
-      const startVh = index * chapterHeight;
-      const endVh = startVh + chapterHeight;
-
       ScrollTrigger.create({
         trigger: '#scroll-proxy',
-        start: `top+=${startVh}vh top`,
-        end: `top+=${endVh}vh top`,
+        start: () => `top+=${index * window.innerHeight}px top`,
+        end: () => `top+=${(index + 1) * window.innerHeight}px top`,
         onEnter: () => this.activateChapter(index, true),
         onEnterBack: () => this.activateChapter(index, true),
       });
