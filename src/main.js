@@ -1,4 +1,4 @@
-// Horologia - Main Application Entry Point
+// Horologia — 7-Chapter Cinematic Scroll Engine
 import { SceneManager } from './components/SceneManager.js';
 import { WatchModel } from './components/WatchModel.js';
 import { RaycasterManager } from './components/RaycasterManager.js';
@@ -12,6 +12,89 @@ import confetti from 'canvas-confetti';
 
 gsap.registerPlugin(ScrollTrigger);
 
+// ── Chapter Definitions ──────────────────────────────────────────────────────
+// Each chapter controls: camera, lookAt, watch group rotation, card content
+const CHAPTERS = [
+  {
+    num: '01',
+    title: 'The Art of Mechanical Precision',
+    body: 'A single mechanical watch contains over 200 hand-finished components — each one indispensable. This masterpiece is crafted to endure for centuries, powered by nothing but the human wrist.',
+    tags: ['28,800 VPH', 'Swiss Lever Escapement'],
+    camera: { x: 0,    y: 1.5,  z: 7.5  },
+    lookAt: { x: 0,    y: 0,    z: 0    },
+    watchRot: { x: 0.42, y: -0.4, z: 0.0 },
+    watchPos: { x: 0,    y: 0,    z: 0   },
+    autoRotate: true,
+  },
+  {
+    num: '02',
+    title: 'Domed Sapphire Crystal & Ceramic Bezel',
+    body: 'Synthetic corundum — 9 Mohs hardness, second only to diamond. The domed sapphire crystal refracts light across the movement, while the ceramic bezel resists scratches and corrosion permanently.',
+    tags: ['Al₂O₃ Corundum', 'Anti-Reflective Coating', '9H Hardness'],
+    camera: { x: 0,    y: 2.8,  z: 5.2  },
+    lookAt: { x: 0,    y: 0.5,  z: 0.8  },
+    watchRot: { x: 0.85, y: -0.15, z: 0.0 },
+    watchPos: { x: 0.4,  y: -0.2,  z: 0   },
+    autoRotate: false,
+  },
+  {
+    num: '03',
+    title: 'Skeleton Dial & Luminescent Hands',
+    body: 'The skeletonized dial ring reveals the movement beneath. Each hand is finished with SuperLumiNova C3 lume — glowing for up to 8 hours in complete darkness, charged by ambient light.',
+    tags: ['SuperLumiNova C3', 'Beveled Indexes', 'Open-Worked Movement'],
+    camera: { x: 0,    y: 5.5,  z: 3.0  },
+    lookAt: { x: 0,    y: 0.5,  z: 0.5  },
+    watchRot: { x: 1.35, y: 0.05, z: 0.0 },
+    watchPos: { x: 0,    y: -0.5,  z: 0   },
+    autoRotate: false,
+  },
+  {
+    num: '04',
+    title: 'The Precision Gear Train',
+    body: 'Five interlocking brass wheels transmit power from the mainspring barrel to the escapement. Each wheel tooth is hand-chamfered with an angle graver — a process taking 3 hours per wheel.',
+    tags: ['Mainspring Barrel', 'Brass Alloy', 'Hand-Chamfered Teeth'],
+    camera: { x: -3.2, y: 1.2,  z: 5.0  },
+    lookAt: { x: -0.8, y: 0.3,  z: 0    },
+    watchRot: { x: 0.55, y: 0.45, z: -0.1 },
+    watchPos: { x: 0.5,  y: 0,    z: 0   },
+    autoRotate: false,
+  },
+  {
+    num: '05',
+    title: 'Balance Wheel & Hairspring',
+    body: 'The heart of the movement oscillates at 28,800 vibrations per hour — 4 Hz — governed by an isochronal flat hairspring. Each oscillation is regulated to ±2 seconds per day accuracy.',
+    tags: ['4 Hz Oscillation', 'Glucydur Balance', 'Nivarox Hairspring'],
+    camera: { x: -4.0, y: 2.2,  z: 3.5  },
+    lookAt: { x: -1.5, y: 0.8,  z: 0.5  },
+    watchRot: { x: 0.5,  y: 0.6,  z: 0.08 },
+    watchPos: { x: 0.8,  y: 0,    z: 0   },
+    autoRotate: false,
+  },
+  {
+    num: '06',
+    title: 'Bridges, Jewels & Architecture',
+    body: '17 synthetic ruby jewels act as friction-free bearings for the gear pivots. The architectural mainplate bridges are hand-anglaged using a 45° chamfer — visible only under 10x magnification.',
+    tags: ['17 Jewels', 'Côtes de Genève', 'Blued Screws'],
+    camera: { x: 2.8,  y: -1.8, z: 5.5  },
+    lookAt: { x: 0.8,  y: -0.4, z: 0.4  },
+    watchRot: { x: 0.3,  y: -0.6, z: 0.12 },
+    watchPos: { x: -0.4, y: 0.3,  z: 0   },
+    autoRotate: false,
+  },
+  {
+    num: '07',
+    title: 'The Complete Holographic Matrix',
+    body: 'Every component laid bare — 200+ parts in perfect spatial harmony. From the oscillating rotor that winds the mainspring, to the hairspring that governs each tick. This is time, deconstructed.',
+    tags: ['200+ Components', 'Haute Horlogerie', 'Bespoke Movement'],
+    camera: { x: 1.5,  y: 3.0,  z: 10.0 },
+    lookAt: { x: 0,    y: 0.5,  z: 0    },
+    watchRot: { x: 0.5,  y: -0.5, z: 0.08 },
+    watchPos: { x: 0,    y: 0,    z: 0   },
+    autoRotate: true,
+  },
+];
+
+// ── Main App ─────────────────────────────────────────────────────────────────
 class HorologiaApp {
   constructor() {
     this.container = document.getElementById('canvas-container');
@@ -19,95 +102,183 @@ class HorologiaApp {
     this.watchModel = new WatchModel(this.sceneManager.scene);
     this.firebaseManager = new FirebaseManager();
 
-    this.explodeProgress = 0;
+    this.currentChapter = 0;
     this.lastTime = performance.now();
+    this.manualControl = false; // True when user drags the explode slider
 
     this.initSmoothScroll();
+    this.initChapterEngine();
     this.initRaycaster();
-    this.initScrollAnimations();
     this.initUI();
     this.initMaterialLab();
     this.initShowcaseGallery();
     this.initFirebaseGuide();
 
-    window.addEventListener('resize', () => {
-      const isDesktop = window.innerWidth > 900;
-      this.watchModel.group.position.x = isDesktop ? 1.1 : 0;
-    });
+    // Activate hero chapter
+    this.activateChapter(0, false);
 
     this.animate();
   }
 
+  // ── Smooth Scroll Setup ──────────────────────────────────────────────────
   initSmoothScroll() {
     this.lenis = new Lenis({
-      duration: 1.2,
+      duration: 1.1,
       easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
       smoothWheel: true
     });
-
     this.lenis.on('scroll', ScrollTrigger.update);
-
-    gsap.ticker.add((time) => {
-      this.lenis.raf(time * 1000);
-    });
+    gsap.ticker.add((time) => this.lenis.raf(time * 1000));
     gsap.ticker.lagSmoothing(0);
   }
 
-  initScrollAnimations() {
-    gsap.to(this, {
-      explodeProgress: 1.0,
-      scrollTrigger: {
-        trigger: '.scroll-container',
-        start: 'top top',
-        end: 'bottom bottom',
-        scrub: 1,
-        onUpdate: (self) => {
-          this.updateExplosion(self.progress);
-          this.updateStoryCards(self.progress);
+  // ── 7-Chapter Scroll Engine ───────────────────────────────────────────────
+  initChapterEngine() {
+    const totalChapters = CHAPTERS.length; // 7
+    const chapterHeight = 100; // Each chapter = 100vh
+
+    CHAPTERS.forEach((chapter, index) => {
+      const startVh = index * chapterHeight;
+      const endVh = startVh + chapterHeight;
+
+      ScrollTrigger.create({
+        trigger: '#scroll-proxy',
+        start: `top+=${startVh}vh top`,
+        end: `top+=${endVh}vh top`,
+        onEnter: () => this.activateChapter(index, true),
+        onEnterBack: () => this.activateChapter(index, true),
+      });
+    });
+
+    // Chapter progress fill — shows position within chapter
+    ScrollTrigger.create({
+      trigger: '#scroll-proxy',
+      start: 'top top',
+      end: 'bottom bottom',
+      onUpdate: (self) => {
+        const fill = document.getElementById('chapter-progress-fill');
+        // Progress within the current chapter (0..1)
+        const chapterProgress = (self.progress * totalChapters) % 1;
+        if (fill) fill.style.width = `${chapterProgress * 100}%`;
+
+        // Update slider (hidden from user when scrolling)
+        const slider = document.getElementById('explode-slider');
+        const label = document.getElementById('explode-percent');
+        const chapterFloat = self.progress * (totalChapters - 1);
+        const chapterIdx = Math.floor(chapterFloat);
+        // Map slider 0..1 based on scroll position
+        const sliderVal = self.progress;
+        if (slider && !this.manualControl) {
+          slider.value = sliderVal;
+          if (label) label.textContent = `${Math.round(sliderVal * 100)}%`;
         }
       }
     });
 
-    // Dramatic 3/4 Isometric Perspective Rotation Timeline
-    const tl = gsap.timeline({
-      scrollTrigger: {
-        trigger: '.scroll-container',
-        start: 'top top',
-        end: 'bottom bottom',
-        scrub: 1.2
-      }
-    });
-
-    tl.to(this.watchModel.group.rotation, { x: 0.52, y: -0.55, z: 0.12 }, 0)
-      .to(this.watchModel.group.rotation, { x: 0.65, y: -0.75, z: 0.2 }, 0.3)
-      .to(this.watchModel.group.rotation, { x: 0.45, y: -0.35, z: 0.05 }, 0.6)
-      .to(this.watchModel.group.rotation, { x: 0.6, y: -0.65, z: 0.15 }, 1.0);
-  }
-
-  updateExplosion(val) {
-    this.explodeProgress = val;
-    this.watchModel.updateExplosion(val);
-
-    const slider = document.getElementById('explode-slider');
-    const label = document.getElementById('explode-percent');
-    if (slider) slider.value = val;
-    if (label) label.textContent = `${Math.round(val * 100)}%`;
-  }
-
-  updateStoryCards(progress) {
-    const cards = document.querySelectorAll('.story-card');
-    const total = cards.length;
-    cards.forEach((card, idx) => {
-      const targetStart = idx / total;
-      const targetEnd = (idx + 1) / total;
-      if (progress >= targetStart - 0.05 && progress <= targetEnd + 0.05) {
-        card.classList.add('visible');
-      } else {
-        card.classList.remove('visible');
-      }
+    // Dot navigation
+    document.querySelectorAll('.dot').forEach(dot => {
+      dot.addEventListener('click', () => {
+        const ch = parseInt(dot.dataset.chapter);
+        const scrollTarget = (ch / CHAPTERS.length) * (700 - 10); // vh
+        // Convert vh to pixels
+        const px = (scrollTarget / 100) * window.innerHeight;
+        this.lenis.scrollTo(px, { duration: 1.4 });
+      });
     });
   }
 
+  // ── Activate a Chapter — Camera + Explosion + Card ───────────────────────
+  activateChapter(index, animate = true) {
+    if (index === this.currentChapter && animate) return;
+    this.currentChapter = index;
+
+    const ch = CHAPTERS[index];
+    const duration = animate ? 1.6 : 0;
+
+    // 1. Camera position + lookAt
+    this.sceneManager.animateCamera(ch.camera, ch.lookAt, duration);
+
+    // 2. Watch group rotation (chapter-specific dramatic angle)
+    if (animate) {
+      gsap.to(this.watchModel.group.rotation, {
+        x: ch.watchRot.x,
+        y: ch.watchRot.y,
+        z: ch.watchRot.z,
+        duration,
+        ease: 'power2.inOut',
+        overwrite: 'auto'
+      });
+      gsap.to(this.watchModel.group.position, {
+        x: ch.watchPos.x,
+        y: ch.watchPos.y,
+        z: ch.watchPos.z,
+        duration,
+        ease: 'power2.inOut',
+        overwrite: 'auto'
+      });
+    } else {
+      this.watchModel.group.rotation.set(ch.watchRot.x, ch.watchRot.y, ch.watchRot.z);
+      this.watchModel.group.position.set(ch.watchPos.x, ch.watchPos.y, ch.watchPos.z);
+    }
+
+    // 3. Part explosion state
+    this.watchModel.explodeToChapter(index, duration);
+
+    // 4. Auto-rotate toggle
+    this.watchModel.autoRotate = ch.autoRotate;
+
+    // 5. Update chapter card UI
+    this.updateChapterCard(index, animate);
+
+    // 6. Update dot nav
+    document.querySelectorAll('.dot').forEach((dot, i) => {
+      dot.classList.toggle('active', i === index);
+    });
+
+    // 7. Play sound
+    if (animate) soundEngine.playRatchetWinding();
+
+    // 8. Confetti on final chapter
+    if (index === 6 && animate) {
+      setTimeout(() => {
+        confetti({ particleCount: 60, spread: 70, origin: { y: 0.5 } });
+      }, 800);
+    }
+  }
+
+  updateChapterCard(index, animate) {
+    const ch = CHAPTERS[index];
+    const card = document.getElementById('chapter-card');
+    const numEl = document.getElementById('chapter-num');
+    const titleEl = document.getElementById('chapter-title');
+    const bodyEl = document.getElementById('chapter-body');
+    const tagsEl = document.getElementById('chapter-tags');
+
+    if (animate) {
+      // Fade out
+      gsap.to([titleEl, bodyEl, tagsEl], {
+        opacity: 0, y: -10, duration: 0.25, ease: 'power2.in',
+        onComplete: () => {
+          numEl.textContent = ch.num;
+          titleEl.textContent = ch.title;
+          bodyEl.textContent = ch.body;
+          tagsEl.innerHTML = ch.tags.map(t => `<span class="tag">${t}</span>`).join('');
+          // Fade in
+          gsap.fromTo([titleEl, bodyEl, tagsEl],
+            { opacity: 0, y: 10 },
+            { opacity: 1, y: 0, duration: 0.4, ease: 'power2.out', stagger: 0.06 }
+          );
+        }
+      });
+    } else {
+      numEl.textContent = ch.num;
+      titleEl.textContent = ch.title;
+      bodyEl.textContent = ch.body;
+      tagsEl.innerHTML = ch.tags.map(t => `<span class="tag">${t}</span>`).join('');
+    }
+  }
+
+  // ── Part Inspector (Hover) ───────────────────────────────────────────────
   initRaycaster() {
     const inspectorEl = document.getElementById('part-inspector');
     const titleEl = document.getElementById('inspector-title');
@@ -118,12 +289,12 @@ class HorologiaApp {
     this.raycasterManager = new RaycasterManager(
       this.sceneManager,
       this.watchModel,
-      (partInfo, partId) => {
+      (partInfo) => {
         if (partInfo) {
           titleEl.textContent = partInfo.name;
           catEl.textContent = partInfo.category;
           descEl.textContent = partInfo.function;
-          metaEl.textContent = `${partInfo.material} | ${partInfo.specs || ''}`;
+          metaEl.textContent = `${partInfo.material}${partInfo.specs ? ' · ' + partInfo.specs : ''}`;
           inspectorEl.classList.add('active');
         } else {
           inspectorEl.classList.remove('active');
@@ -132,12 +303,20 @@ class HorologiaApp {
     );
   }
 
+  // ── Explode Slider (manual override) ────────────────────────────────────
   initUI() {
     const slider = document.getElementById('explode-slider');
+    const label = document.getElementById('explode-percent');
+
     if (slider) {
+      slider.addEventListener('pointerdown', () => { this.manualControl = true; });
+      slider.addEventListener('pointerup', () => {
+        setTimeout(() => { this.manualControl = false; }, 2000);
+      });
       slider.addEventListener('input', (e) => {
         const val = parseFloat(e.target.value);
-        this.updateExplosion(val);
+        if (label) label.textContent = `${Math.round(val * 100)}%`;
+        this.watchModel.explodeByProgress(val);
         soundEngine.playExpansionWhoosh();
       });
     }
@@ -145,17 +324,16 @@ class HorologiaApp {
     const btnSound = document.getElementById('btn-sound');
     const soundIcon = document.getElementById('sound-icon');
     const soundLabel = document.getElementById('sound-label');
-
     btnSound.addEventListener('click', () => {
       soundEngine.init();
       const muted = soundEngine.toggleMute();
       soundIcon.textContent = muted ? '🔇' : '🔊';
       soundLabel.textContent = muted ? 'Muted' : 'Audio On';
     });
-
     window.addEventListener('click', () => soundEngine.init(), { once: true });
   }
 
+  // ── Material Lab ─────────────────────────────────────────────────────────
   initMaterialLab() {
     const labDrawer = document.getElementById('material-lab');
     const btnCustomizer = document.getElementById('btn-customizer');
@@ -166,7 +344,6 @@ class HorologiaApp {
       labDrawer.classList.toggle('open');
       btnCustomizer.classList.toggle('active');
     });
-
     btnCloseLab.addEventListener('click', () => {
       labDrawer.classList.remove('open');
       btnCustomizer.classList.remove('active');
@@ -175,23 +352,17 @@ class HorologiaApp {
     presetContainer.innerHTML = MATERIAL_SCHEMES.map(s => `
       <div class="preset-card ${s.id === this.watchModel.currentScheme.id ? 'active' : ''}" data-scheme-id="${s.id}">
         <div class="preset-color-swatch" style="background: #${s.caseColor.toString(16).padStart(6, '0')}"></div>
-        <div class="preset-info">
-          <h4>${s.name}</h4>
-          <p>${s.tagline}</p>
-        </div>
+        <div class="preset-info"><h4>${s.name}</h4><p>${s.tagline}</p></div>
       </div>
     `).join('');
 
     presetContainer.addEventListener('click', (e) => {
       const card = e.target.closest('.preset-card');
       if (!card) return;
-
-      const schemeId = card.dataset.schemeId;
-      const targetScheme = MATERIAL_SCHEMES.find(s => s.id === schemeId);
-      if (targetScheme) {
-        this.watchModel.applyMaterialScheme(targetScheme);
+      const scheme = MATERIAL_SCHEMES.find(s => s.id === card.dataset.schemeId);
+      if (scheme) {
+        this.watchModel.applyMaterialScheme(scheme);
         soundEngine.playRatchetWinding();
-
         document.querySelectorAll('.preset-card').forEach(c => c.classList.remove('active'));
         card.classList.add('active');
       }
@@ -210,27 +381,14 @@ class HorologiaApp {
       const title = document.getElementById('watch-title').value;
       const creator = document.getElementById('creator-name').value;
       const desc = document.getElementById('design-desc').value;
-
-      const newDesign = await this.firebaseManager.saveDesign({
-        title,
-        creator,
-        description: desc,
-        schemeId: this.watchModel.currentScheme.id
-      });
-
+      await this.firebaseManager.saveDesign({ title, creator, description: desc, schemeId: this.watchModel.currentScheme.id });
       saveModal.classList.remove('open');
       saveForm.reset();
-
-      confetti({
-        particleCount: 80,
-        spread: 70,
-        origin: { y: 0.6 }
-      });
-
-      alert(`🎉 Watch creation "${title}" saved to showcase!`);
+      confetti({ particleCount: 80, spread: 70, origin: { y: 0.6 } });
     });
   }
 
+  // ── Showcase Gallery ─────────────────────────────────────────────────────
   initShowcaseGallery() {
     const showcaseModal = document.getElementById('showcase-modal');
     const btnShowcase = document.getElementById('btn-showcase');
@@ -239,47 +397,43 @@ class HorologiaApp {
 
     btnShowcase.addEventListener('click', async () => {
       showcaseModal.classList.add('open');
-      this.renderShowcaseCards(galleryContainer);
+      await this.renderShowcaseCards(galleryContainer);
     });
-
     btnCloseShowcase.addEventListener('click', () => showcaseModal.classList.remove('open'));
   }
 
   async renderShowcaseCards(container) {
-    container.innerHTML = `<p style="color: var(--text-muted);">Loading community watches...</p>`;
+    container.innerHTML = `<p style="color: var(--text-muted); grid-column: 1/-1;">Loading community watches...</p>`;
     const designs = await this.firebaseManager.fetchCommunityDesigns();
-
     container.innerHTML = designs.map(d => `
       <div class="gallery-card">
         <h4>${d.title}</h4>
-        <p style="font-size: 0.75rem; color: var(--accent-gold);">By ${d.creator} • ${d.timestamp || 'Recently'}</p>
-        <p>${d.description || 'Custom Horologia movement finish.'}</p>
+        <p style="font-size: 0.7rem; color: var(--accent-gold); margin-bottom: 6px;">By ${d.creator} · ${d.timestamp || 'Recently'}</p>
+        <p>${d.description || 'A bespoke Horologia movement finish.'}</p>
         <div class="card-footer">
-          <button class="like-btn" data-id="${d.id}">❤️ ${d.likes || 1}</button>
+          <button class="like-btn" data-id="${d.id}">❤ ${d.likes || 1}</button>
           <button class="load-btn" data-scheme-id="${d.schemeId}">Load Design</button>
         </div>
       </div>
     `).join('');
 
     container.querySelectorAll('.load-btn').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        const schemeId = e.target.dataset.schemeId;
-        const scheme = MATERIAL_SCHEMES.find(s => s.id === schemeId) || MATERIAL_SCHEMES[0];
+      btn.addEventListener('click', () => {
+        const scheme = MATERIAL_SCHEMES.find(s => s.id === btn.dataset.schemeId) || MATERIAL_SCHEMES[0];
         this.watchModel.applyMaterialScheme(scheme);
         soundEngine.playRatchetWinding();
         document.getElementById('showcase-modal').classList.remove('open');
       });
     });
-
     container.querySelectorAll('.like-btn').forEach(btn => {
-      btn.addEventListener('click', async (e) => {
-        const id = e.target.dataset.id;
-        await this.firebaseManager.likeDesign(id);
-        this.renderShowcaseCards(container);
+      btn.addEventListener('click', async () => {
+        await this.firebaseManager.likeDesign(btn.dataset.id);
+        await this.renderShowcaseCards(container);
       });
     });
   }
 
+  // ── Firebase Guide ───────────────────────────────────────────────────────
   initFirebaseGuide() {
     const guideModal = document.getElementById('firebase-modal');
     const btnGuide = document.getElementById('btn-firebase-guide');
@@ -291,28 +445,27 @@ class HorologiaApp {
 
     configForm.addEventListener('submit', (e) => {
       e.preventDefault();
-      const rawJson = document.getElementById('firebase-config-json').value;
       try {
-        const parsed = JSON.parse(rawJson);
-        const success = this.firebaseManager.connect(parsed);
-        if (success) {
-          alert('⚡ Live Firebase project connected successfully!');
-          guideModal.classList.remove('open');
-        } else {
-          alert('⚠️ Invalid Firebase configuration object.');
-        }
-      } catch (err) {
-        alert('⚠️ Invalid JSON format.');
-      }
+        const parsed = JSON.parse(document.getElementById('firebase-config-json').value);
+        const ok = this.firebaseManager.connect(parsed);
+        if (ok) { alert('⚡ Firebase connected!'); guideModal.classList.remove('open'); }
+        else alert('⚠️ Invalid Firebase config.');
+      } catch { alert('⚠️ Invalid JSON format.'); }
     });
   }
 
+  // ── Render Loop ──────────────────────────────────────────────────────────
   animate() {
     requestAnimationFrame(() => this.animate());
 
     const now = performance.now();
-    const delta = (now - this.lastTime) / 1000;
+    const delta = Math.min((now - this.lastTime) / 1000, 0.05);
     this.lastTime = now;
+
+    // Auto-rotate watch group (only in hero and final chapter)
+    if (this.watchModel.autoRotate) {
+      this.watchModel.group.rotation.y += delta * 0.18;
+    }
 
     this.watchModel.updateKinematics(delta);
     this.sceneManager.update();

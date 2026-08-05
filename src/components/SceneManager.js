@@ -1,119 +1,178 @@
-// Horologia - Three.js Scene, Camera, Lighting & Studio Renderer Manager
+// Horologia - Three.js Scene, Camera & Studio Renderer Manager
 import * as THREE from 'three';
+import { gsap } from 'gsap';
 
 export class SceneManager {
   constructor(canvasContainer) {
     this.container = canvasContainer;
-    this.width = this.container.clientWidth || window.innerWidth;
-    this.height = this.container.clientHeight || window.innerHeight;
+    this.width = window.innerWidth;
+    this.height = window.innerHeight;
 
-    this.scene = new THREE.Scene();
-    this.scene.fog = new THREE.FogExp2(0x0b0c10, 0.015);
+    // Camera lookAt target — animated per chapter
+    this.lookAtTarget = new THREE.Vector3(0, 0, 0);
+    this.currentLookAt = new THREE.Vector3(0, 0, 0);
 
-    // Front-facing PerspectiveCamera looking at 3D origin (0, 0, 0)
-    this.camera = new THREE.PerspectiveCamera(38, this.width / this.height, 0.1, 100);
-    this.updateCameraForViewport();
+    this.initRenderer();
+    this.initCamera();
+    this.initScene();
+    this.initLighting();
+    this.initEnvironment();
 
+    window.addEventListener('resize', this.onResize.bind(this));
+  }
+
+  initRenderer() {
     this.renderer = new THREE.WebGLRenderer({
       antialias: true,
-      alpha: true,
+      alpha: false,
       powerPreference: 'high-performance'
     });
     this.renderer.setSize(this.width, this.height);
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.4;
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-
+    this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    this.renderer.toneMappingExposure = 1.3;
+    this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.container.appendChild(this.renderer.domElement);
-
-    this.mouse = new THREE.Vector2(0, 0);
-    this.targetMouse = new THREE.Vector2(0, 0);
-
-    this.initLighting();
-    this.initEnvironmentMap();
-    this.bindEvents();
   }
 
-  updateCameraForViewport() {
-    // Camera is centered looking straight at the scene
-    const isDesktop = this.width > 900;
-    const baseZ = isDesktop ? 9.5 : 12.0;
-    this.camera.position.set(0, 0, baseZ);
+  initCamera() {
+    this.camera = new THREE.PerspectiveCamera(45, this.width / this.height, 0.1, 100);
+    // Initial hero position: slightly above, looking at center
+    this.camera.position.set(0, 1.5, 7.5);
     this.camera.lookAt(0, 0, 0);
   }
 
+  initScene() {
+    this.scene = new THREE.Scene();
+    this.scene.fog = new THREE.FogExp2(0x08090d, 0.04);
+
+    // Subtle grid floor
+    const gridHelper = new THREE.GridHelper(20, 40, 0x1a1c24, 0x111318);
+    gridHelper.position.y = -3.5;
+    gridHelper.material.opacity = 0.35;
+    gridHelper.material.transparent = true;
+    this.scene.add(gridHelper);
+  }
+
   initLighting() {
-    this.ambientLight = new THREE.AmbientLight(0xffffff, 1.4);
+    // Warm ambient
+    this.ambientLight = new THREE.AmbientLight(0xfff0d8, 0.35);
     this.scene.add(this.ambientLight);
 
-    // Gold Key Light
-    this.keyLight = new THREE.SpotLight(0xfff5ea, 6.0, 40, Math.PI / 3, 0.4, 1);
-    this.keyLight.position.set(5, 5, 8);
+    // Key light — warm top
+    this.keyLight = new THREE.DirectionalLight(0xfff3e0, 2.8);
+    this.keyLight.position.set(3, 6, 4);
     this.keyLight.castShadow = true;
+    this.keyLight.shadow.mapSize.set(2048, 2048);
+    this.keyLight.shadow.camera.near = 0.1;
+    this.keyLight.shadow.camera.far = 30;
+    this.keyLight.shadow.camera.left = -8;
+    this.keyLight.shadow.camera.right = 8;
+    this.keyLight.shadow.camera.top = 8;
+    this.keyLight.shadow.camera.bottom = -8;
+    this.keyLight.shadow.bias = -0.001;
     this.scene.add(this.keyLight);
 
-    // Cyan Rim Light
-    this.rimLight = new THREE.DirectionalLight(0x00d2ff, 3.5);
-    this.rimLight.position.set(-7, 4, -4);
+    // Cool rim light
+    this.rimLight = new THREE.DirectionalLight(0x4488ff, 1.4);
+    this.rimLight.position.set(-5, 2, -4);
     this.scene.add(this.rimLight);
 
-    // Bottom Fill Light
-    this.bottomLight = new THREE.DirectionalLight(0xd4af37, 1.8);
-    this.bottomLight.position.set(0, -6, 4);
-    this.scene.add(this.bottomLight);
+    // Fill light (warm, from below-front)
+    this.fillLight = new THREE.DirectionalLight(0xffe8b0, 0.8);
+    this.fillLight.position.set(0, -3, 5);
+    this.scene.add(this.fillLight);
+
+    // Accent under-glow (golden)
+    this.underGlow = new THREE.PointLight(0xc9a44a, 0.6, 8);
+    this.underGlow.position.set(0, -2, 2);
+    this.scene.add(this.underGlow);
+
+    // Spotlight for drama — tracks watch center
+    this.spotLight = new THREE.SpotLight(0xffffff, 3.0);
+    this.spotLight.position.set(0, 8, 3);
+    this.spotLight.angle = 0.35;
+    this.spotLight.penumbra = 0.5;
+    this.spotLight.decay = 1.5;
+    this.spotLight.castShadow = true;
+    this.spotLight.target.position.set(0, 0, 0);
+    this.scene.add(this.spotLight);
+    this.scene.add(this.spotLight.target);
   }
 
-  initEnvironmentMap() {
-    const canvas = document.createElement('canvas');
-    canvas.width = 1024;
-    canvas.height = 512;
-    const ctx = canvas.getContext('2d');
+  initEnvironment() {
+    // Procedural gradient environment map
+    const pmremGenerator = new THREE.PMREMGenerator(this.renderer);
+    pmremGenerator.compileEquirectangularShader();
 
-    const grad = ctx.createLinearGradient(0, 0, 0, 512);
-    grad.addColorStop(0, '#0b0d12');
-    grad.addColorStop(0.2, '#3a4b60');
-    grad.addColorStop(0.5, '#ffffff'); // Horizon sheen
-    grad.addColorStop(0.8, '#1e2633');
-    grad.addColorStop(1, '#0b0d12');
+    const envScene = new THREE.Scene();
+    envScene.background = new THREE.Color(0x0a0c12);
 
-    ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, 1024, 512);
+    const envGeometry = new THREE.SphereGeometry(50, 32, 32);
+    const envMaterial = new THREE.MeshBasicMaterial({
+      color: 0x1a1e2e,
+      side: THREE.BackSide
+    });
+    envScene.add(new THREE.Mesh(envGeometry, envMaterial));
 
-    const texture = new THREE.CanvasTexture(canvas);
-    texture.mapping = THREE.EquirectangularReflectionMapping;
-    this.scene.environment = texture;
+    // Add a few point lights to the env scene for reflection variety
+    const el1 = new THREE.PointLight(0xc9a44a, 1, 100);
+    el1.position.set(20, 10, 10);
+    envScene.add(el1);
+    const el2 = new THREE.PointLight(0x4488cc, 0.8, 100);
+    el2.position.set(-20, -5, -10);
+    envScene.add(el2);
+
+    const envRT = pmremGenerator.fromScene(envScene);
+    this.scene.environment = envRT.texture;
+    this.envMap = envRT.texture;
+    pmremGenerator.dispose();
   }
 
-  bindEvents() {
-    window.addEventListener('resize', () => this.onWindowResize());
-    window.addEventListener('mousemove', (e) => {
-      this.targetMouse.x = (e.clientX / window.innerWidth) * 2 - 1;
-      this.targetMouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+  /**
+   * Animate camera to a new position with smooth GSAP tween.
+   * @param {Object} pos — {x, y, z} target camera position
+   * @param {Object} lookAt — {x, y, z} target lookAt point
+   * @param {number} duration — seconds
+   * @param {string} ease — GSAP easing
+   */
+  animateCamera(pos, lookAt, duration = 1.6, ease = 'power2.inOut') {
+    gsap.to(this.camera.position, {
+      x: pos.x,
+      y: pos.y,
+      z: pos.z,
+      duration,
+      ease,
+      overwrite: 'auto'
+    });
+    gsap.to(this.lookAtTarget, {
+      x: lookAt.x,
+      y: lookAt.y,
+      z: lookAt.z,
+      duration,
+      ease,
+      overwrite: 'auto'
     });
   }
 
-  onWindowResize() {
-    this.width = this.container.clientWidth || window.innerWidth;
-    this.height = this.container.clientHeight || window.innerHeight;
-
-    this.camera.aspect = this.width / this.height;
-    this.camera.updateProjectionMatrix();
-    this.updateCameraForViewport();
-
-    this.renderer.setSize(this.width, this.height);
-  }
-
   update() {
-    this.mouse.x += (this.targetMouse.x - this.mouse.x) * 0.05;
-    this.mouse.y += (this.targetMouse.y - this.mouse.y) * 0.05;
-
-    this.keyLight.position.x = 5 + this.mouse.x * 2.0;
-    this.keyLight.position.y = 5 + this.mouse.y * 2.0;
+    // Smoothly interpolate lookAt each frame
+    this.currentLookAt.lerp(this.lookAtTarget, 0.06);
+    this.camera.lookAt(this.currentLookAt);
   }
 
   render() {
     this.renderer.render(this.scene, this.camera);
+  }
+
+  onResize() {
+    this.width = window.innerWidth;
+    this.height = window.innerHeight;
+    this.camera.aspect = this.width / this.height;
+    this.camera.updateProjectionMatrix();
+    this.renderer.setSize(this.width, this.height);
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   }
 }

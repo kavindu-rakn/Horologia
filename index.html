@@ -3,293 +3,165 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Horologia - Exploded 3D Mechanical Watch</title>
-  <meta name="description" content="Explore haute horlogerie with Horologia: an interactive photorealistic 3D exploded mechanical watch movement powered by Three.js, GSAP, and Firebase.">
-  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <title>Horologia — Exploded 3D Mechanical Watch</title>
+  <meta name="description" content="A cinematic scroll-driven journey through the anatomy of a haute horlogerie mechanical watch. Explore every gear, jewel, and escapement in stunning 3D.">
   <link rel="stylesheet" href="/src/style.css">
 </head>
 <body>
 
-  <!-- WebGL 3D Canvas Background Layer -->
-  <div id="canvas-container"></div>
+  <!-- ═══════════════════════════════════════════
+       FIXED FULLSCREEN 3D CANVAS
+  ═══════════════════════════════════════════ -->
+  <div id="canvas-container" aria-hidden="true"></div>
 
-  <!-- Header Navigation -->
-  <header>
-    <div class="brand">
-      <div class="brand-crest">H</div>
-      <div class="brand-title">HOROLOGIA</div>
+  <!-- ═══════════════════════════════════════════
+       FIXED HEADER
+  ═══════════════════════════════════════════ -->
+  <header id="site-header">
+    <div id="brand">
+      <span class="brand-name">HOROLOGIA</span>
+      <span class="brand-sub">Haute Horlogerie</span>
     </div>
-    <div class="nav-actions">
-      <button id="btn-sound" class="btn-nav" title="Toggle Mechanical Audio Ticking">
+    <nav id="header-nav">
+      <button id="btn-sound" class="nav-btn" title="Toggle Sound">
         <span id="sound-icon">🔊</span>
         <span id="sound-label">Audio On</span>
       </button>
-
-      <button id="btn-customizer" class="btn-nav">
-        🎨 Material Lab
-      </button>
-
-      <button id="btn-showcase" class="btn-nav">
-        🏛️ Showcase
-      </button>
-
-      <button id="btn-firebase-guide" class="btn-nav">
-        ⚡ Firebase Setup
-      </button>
-    </div>
+      <button id="btn-customizer" class="nav-btn">✦ Material Lab</button>
+      <button id="btn-showcase" class="nav-btn">◈ Showcase</button>
+      <button id="btn-firebase-guide" class="nav-btn">⚡ Firebase</button>
+    </nav>
   </header>
 
-  <!-- Interactive Part HUD Inspector (Bottom-Left) -->
-  <div id="part-inspector">
-    <div class="inspector-header">
-      <div id="inspector-title" class="inspector-title">Domed Sapphire Crystal</div>
-      <div id="inspector-category" class="inspector-category">Exterior</div>
+  <!-- ═══════════════════════════════════════════
+       FIXED CHAPTER CARD (LEFT OVERLAY)
+  ═══════════════════════════════════════════ -->
+  <div id="chapter-card">
+    <div id="chapter-number">Chapter <span id="chapter-num">01</span></div>
+    <h2 id="chapter-title">The Art of Mechanical Precision</h2>
+    <p id="chapter-body">A single mechanical watch contains over 200 hand-finished components — each one indispensable. Scroll to disassemble every layer of this masterpiece, crafted to last centuries.</p>
+    <div id="chapter-tags">
+      <span class="tag" id="tag-1">28,800 VPH</span>
+      <span class="tag" id="tag-2">Swiss Made</span>
     </div>
-    <div id="inspector-desc" class="inspector-desc">
-      Protects the internal dial assembly with anti-reflective double-domed coating.
-    </div>
-    <div id="inspector-meta" class="inspector-meta">
-      Synthetic Corundum (Al₂O₃) | Hardness: 9 Mohs
+    <div id="chapter-progress-bar">
+      <div id="chapter-progress-fill"></div>
     </div>
   </div>
 
-  <!-- Exploded View Slider Bar (Bottom-Right) -->
-  <div id="exploded-controls">
-    <span class="control-label">EXPLODE MOVEMENT</span>
+  <!-- ═══════════════════════════════════════════
+       FIXED CHAPTER DOT NAVIGATION (RIGHT)
+  ═══════════════════════════════════════════ -->
+  <nav id="chapter-dots" aria-label="Chapter navigation">
+    <button class="dot active" data-chapter="0" title="Hero"></button>
+    <button class="dot" data-chapter="1" title="Sapphire Crystal"></button>
+    <button class="dot" data-chapter="2" title="Dial & Hands"></button>
+    <button class="dot" data-chapter="3" title="Gear Train"></button>
+    <button class="dot" data-chapter="4" title="Balance Wheel"></button>
+    <button class="dot" data-chapter="5" title="Bridges & Jewels"></button>
+    <button class="dot" data-chapter="6" title="Full Explode"></button>
+  </nav>
+
+  <!-- ═══════════════════════════════════════════
+       FIXED EXPLODE HUD (BOTTOM CENTER)
+  ═══════════════════════════════════════════ -->
+  <div id="explode-hud">
+    <label for="explode-slider">Explode</label>
     <input type="range" id="explode-slider" min="0" max="1" step="0.001" value="0">
-    <span id="explode-percent" style="font-family: monospace; font-size: 0.85rem; color: var(--accent-gold);">0%</span>
+    <span id="explode-percent">0%</span>
   </div>
 
-  <!-- Material Lab Customizer Drawer (Right Drawer) -->
-  <div id="material-lab">
-    <div class="lab-header">
-      <h3 class="lab-title">Material Lab</h3>
-      <button id="btn-close-lab" class="close-btn">&times;</button>
-    </div>
-
-    <p style="font-size: 0.85rem; color: var(--text-muted);">
-      Select a bespoke horological finish scheme for your custom watch movement.
-    </p>
-
-    <div class="preset-grid" id="preset-container">
-      <!-- Preset cards dynamically generated here -->
-    </div>
-
-    <div style="margin-top: 1rem;">
-      <button id="btn-open-save-modal" class="btn-primary">
-        💾 Save Creation
-      </button>
-    </div>
+  <!-- ═══════════════════════════════════════════
+       FIXED PART INSPECTOR (HOVER HUD)
+  ═══════════════════════════════════════════ -->
+  <div id="part-inspector">
+    <div id="inspector-category"></div>
+    <h3 id="inspector-title"></h3>
+    <p id="inspector-desc"></p>
+    <div id="inspector-meta"></div>
   </div>
 
-  <!-- Save Design Modal -->
-  <div id="save-modal" class="modal-overlay">
-    <div class="modal-content">
-      <h3 style="font-family: var(--font-heading); color: var(--accent-gold); margin-bottom: 1rem;">
-        Save Custom Horologia Creation
-      </h3>
+  <!-- ═══════════════════════════════════════════
+       SCROLL PROXY — drives all animations
+       700vh = 7 chapters × 100vh each
+  ═══════════════════════════════════════════ -->
+  <div id="scroll-proxy"></div>
+
+  <!-- ═══════════════════════════════════════════
+       MATERIAL LAB DRAWER
+  ═══════════════════════════════════════════ -->
+  <aside id="material-lab" aria-label="Material Lab">
+    <div class="drawer-header">
+      <h3>Material Lab</h3>
+      <button id="btn-close-lab" class="icon-btn">✕</button>
+    </div>
+    <p class="drawer-subtitle">Select a material finish for your timepiece</p>
+    <div id="preset-container"></div>
+    <div class="drawer-footer">
+      <button id="btn-open-save-modal" class="btn-primary">Save to Showcase ✦</button>
+    </div>
+  </aside>
+
+  <!-- ═══════════════════════════════════════════
+       SAVE DESIGN MODAL
+  ═══════════════════════════════════════════ -->
+  <div id="save-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="save-modal-title">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 id="save-modal-title">Save Your Watch Design</h3>
+        <button id="btn-close-save" class="icon-btn">✕</button>
+      </div>
       <form id="save-design-form">
-        <div class="form-group">
-          <label for="watch-title">Timepiece Name</label>
-          <input type="text" id="watch-title" class="form-input" placeholder="e.g., Grand Tourbillon Royal 18k" required>
-        </div>
-        <div class="form-group">
-          <label for="creator-name">Master Watchmaker Name</label>
-          <input type="text" id="creator-name" class="form-input" placeholder="e.g., Jean-Luc" required>
-        </div>
-        <div class="form-group">
-          <label for="design-desc">Design Inspiration Notes</label>
-          <textarea id="design-desc" class="form-input" rows="3" placeholder="Describe your finish & material choices..."></textarea>
-        </div>
-        <button type="submit" class="btn-primary">Publish to Global Showcase</button>
-        <button type="button" id="btn-close-save" class="btn-nav" style="width: 100%; margin-top: 0.5rem; justify-content: center;">Cancel</button>
+        <label for="watch-title">Watch Title</label>
+        <input type="text" id="watch-title" placeholder="My Rose Gold Edition" required>
+        <label for="creator-name">Your Name</label>
+        <input type="text" id="creator-name" placeholder="Anonymous Watchmaker" required>
+        <label for="design-desc">Description</label>
+        <textarea id="design-desc" rows="3" placeholder="Describe your vision..."></textarea>
+        <button type="submit" class="btn-primary">Publish to Gallery ✦</button>
       </form>
     </div>
   </div>
 
-  <!-- Showcase Gallery Modal -->
-  <div id="showcase-modal" class="modal-overlay">
-    <div class="modal-content" style="max-width: 800px;">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-        <h3 style="font-family: var(--font-heading); color: var(--accent-gold);">
-          Community Horologia Gallery
-        </h3>
-        <button id="btn-close-showcase" class="close-btn">&times;</button>
+  <!-- ═══════════════════════════════════════════
+       SHOWCASE GALLERY MODAL
+  ═══════════════════════════════════════════ -->
+  <div id="showcase-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="showcase-modal-title">
+    <div class="modal-box modal-wide">
+      <div class="modal-header">
+        <h3 id="showcase-modal-title">Community Showcase</h3>
+        <button id="btn-close-showcase" class="icon-btn">✕</button>
       </div>
+      <div id="gallery-container"></div>
+    </div>
+  </div>
 
-      <p style="font-size: 0.85rem; color: var(--text-muted);">
-        Explore custom watch movements designed by visitors around the world. Click "Load" to apply any design live to the 3D watch.
-      </p>
-
-      <div class="gallery-grid" id="gallery-container">
-        <!-- Community cards loaded dynamically -->
+  <!-- ═══════════════════════════════════════════
+       FIREBASE GUIDE MODAL
+  ═══════════════════════════════════════════ -->
+  <div id="firebase-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="firebase-modal-title">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 id="firebase-modal-title">⚡ Connect Firebase</h3>
+        <button id="btn-close-firebase" class="icon-btn">✕</button>
+      </div>
+      <div class="firebase-guide">
+        <ol>
+          <li>Go to <strong>console.firebase.google.com</strong></li>
+          <li>Click <strong>Add project</strong> → name it "Horologia"</li>
+          <li>Enable <strong>Firestore Database</strong> in test mode</li>
+          <li>Go to <strong>Project Settings → Your apps → Web</strong></li>
+          <li>Copy the <code>firebaseConfig</code> object and paste it below</li>
+        </ol>
+        <form id="firebase-config-form">
+          <label for="firebase-config-json">Firebase Config JSON</label>
+          <textarea id="firebase-config-json" rows="8" placeholder='{&#10;  "apiKey": "...",&#10;  "authDomain": "...",&#10;  "projectId": "..."&#10;}'></textarea>
+          <button type="submit" class="btn-primary">Connect ⚡</button>
+        </form>
       </div>
     </div>
   </div>
 
-  <!-- Beginner Firebase Guide Modal -->
-  <div id="firebase-modal" class="modal-overlay">
-    <div class="modal-content" style="max-width: 650px;">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-        <h3 style="font-family: var(--font-heading); color: var(--accent-gold);">
-          ⚡ Firebase Easy Setup Guide
-        </h3>
-        <button id="btn-close-firebase" class="close-btn">&times;</button>
-      </div>
-
-      <p style="font-size: 0.9rem; color: var(--text-muted); line-height: 1.6; margin-bottom: 1rem;">
-        Horologia is already <strong>100% functional out of the box</strong> using local persistence! To connect your own free Firebase cloud database, follow these 3 quick steps:
-      </p>
-
-      <ol style="font-size: 0.85rem; color: var(--text-main); line-height: 1.8; margin-left: 1.2rem; margin-bottom: 1.5rem;">
-        <li>Go to <a href="https://console.firebase.google.com/" target="_blank" style="color: var(--accent-cyan);">Firebase Console</a> and click <strong>Create a Project</strong>.</li>
-        <li>In your project, create a <strong>Cloud Firestore</strong> database in test mode.</li>
-        <li>Under Project Settings ⚙️ -> Web App, copy your <code>firebaseConfig</code> JSON object and paste it below:</li>
-      </ol>
-
-      <form id="firebase-config-form">
-        <div class="form-group">
-          <label for="firebase-config-json">Firebase Config JSON Object</label>
-          <textarea id="firebase-config-json" class="form-input" rows="5" placeholder='{
-  "apiKey": "AIzaSy...",
-  "authDomain": "horologia.firebaseapp.com",
-  "projectId": "horologia-123",
-  "storageBucket": "horologia.appspot.com",
-  "messagingSenderId": "123456...",
-  "appId": "1:123456..."
-}'></textarea>
-        </div>
-        <button type="submit" class="btn-primary">Connect Live Firebase Database</button>
-      </form>
-    </div>
-  </div>
-
-  <!-- Scroll Story Overlay Sections -->
-  <div class="scroll-container">
-
-    <!-- Section 1: Hero Overview -->
-    <section class="story-section">
-      <div class="story-card visible">
-        <div class="section-tag">Haute Horlogerie • Movement Calibre 01</div>
-        <h2>The Art of Mechanical Precision</h2>
-        <p>
-          Welcome to Horologia. Witness every gear, balance spring, and jewel bearing working in perfect mathematical unison at 28,800 vibrations per hour.
-        </p>
-        <div class="spec-list">
-          <div class="spec-item">
-            <span class="spec-label">Frequency</span>
-            <span class="spec-value">4 Hz (28,800 VPH)</span>
-          </div>
-          <div class="spec-item">
-            <span class="spec-label">Power Reserve</span>
-            <span class="spec-value">72 Hours</span>
-          </div>
-          <div class="spec-item">
-            <span class="spec-label">Jewel Bearings</span>
-            <span class="spec-value">27 Synthetic Rubies</span>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Section 2: Exterior Sapphire & Bezel -->
-    <section class="story-section" style="justify-content: flex-end;">
-      <div class="story-card">
-        <div class="section-tag">Chapter I • Exterior Chassis</div>
-        <h2>Domed Sapphire & Ceramic Bezel</h2>
-        <p>
-          Cut from solid synthetic corundum crystal with dual-sided anti-reflective coating, protecting the ceramic tachymeter bezel and polished case lugs.
-        </p>
-        <div class="spec-list">
-          <div class="spec-item">
-            <span class="spec-label">Glass Hardness</span>
-            <span class="spec-value">9 Mohs Scale</span>
-          </div>
-          <div class="spec-item">
-            <span class="spec-label">Bezel Material</span>
-            <span class="spec-value">Zirconium Oxide Ceramic</span>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Section 3: Skeleton Dial & Hands -->
-    <section class="story-section">
-      <div class="story-card">
-        <div class="section-tag">Chapter II • Face Architecture</div>
-        <h2>Skeleton Dial & Luminescent Hands</h2>
-        <p>
-          Laser-etched openwork dial frame featuring applied baton indices and blued steel hands coated with high-luminance Swiss Super-LumiNova.
-        </p>
-        <div class="spec-list">
-          <div class="spec-item">
-            <span class="spec-label">Hand Drive</span>
-            <span class="spec-value">Smooth Mechanical Sweep</span>
-          </div>
-          <div class="spec-item">
-            <span class="spec-label">Luminescence</span>
-            <span class="spec-value">Swiss BGW9 / C3</span>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Section 4: Kinematic Gear Train -->
-    <section class="story-section" style="justify-content: flex-end;">
-      <div class="story-card">
-        <div class="section-tag">Chapter III • Torque Transmission</div>
-        <h2>The Precision Gear Train</h2>
-        <p>
-          Rotational power flows from the mainspring barrel through gold-plated center, third, and fourth wheels, accelerating gear output to drive the escapement.
-        </p>
-        <div class="spec-list">
-          <div class="spec-item">
-            <span class="spec-label">Mainspring Alloy</span>
-            <span class="spec-value">Nivaflex Elastic Steel</span>
-          </div>
-          <div class="spec-item">
-            <span class="spec-label">Seconds Wheel Ratio</span>
-            <span class="spec-value">1:60 Torque Multiplication</span>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Section 5: Oscillator & Balance Wheel -->
-    <section class="story-section">
-      <div class="story-card">
-        <div class="section-tag">Chapter IV • The Heartbeat</div>
-        <h2>Balance Wheel & Hairspring</h2>
-        <p>
-          The beating pulse of mechanical time. A Glucydur balance wheel with gold poising screws paired with a Breguet overcoil hairspring and synthetic ruby pallets.
-        </p>
-        <div class="spec-list">
-          <div class="spec-item">
-            <span class="spec-label">Balance Wheel</span>
-            <span class="spec-value">Glucydur Invariable Alloy</span>
-          </div>
-          <div class="spec-item">
-            <span class="spec-label">Hairspring</span>
-            <span class="spec-value">Breguet Terminal Curve</span>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Section 6: Fully Exploded View -->
-    <section class="story-section" style="justify-content: center; text-align: center;">
-      <div class="story-card" style="max-width: 600px;">
-        <div class="section-tag">Chapter V • Deconstructed Matrix</div>
-        <h2>Exploded Holographic View</h2>
-        <p>
-          Hover your mouse over any floating component to inspect its material composition, function, and horological engineering metrics. Customize materials in the Material Lab drawer!
-        </p>
-      </div>
-    </section>
-
-  </div>
-
-  <!-- Application Main Entry Script -->
   <script type="module" src="/src/main.js"></script>
 </body>
 </html>
