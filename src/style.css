@@ -1,0 +1,568 @@
+/* Horologia - Haute Horlogerie Design System */
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Inter:wght@300;400;500;600;700&display=swap');
+
+:root {
+  --bg-primary: #0b0c10;
+  --bg-surface: rgba(18, 22, 30, 0.75);
+  --bg-glass: rgba(15, 20, 28, 0.85);
+  --border-gold: rgba(212, 175, 55, 0.3);
+  --border-subtle: rgba(255, 255, 255, 0.08);
+
+  --accent-gold: #d4af37;
+  --accent-gold-bright: #f4d03f;
+  --accent-cyan: #00d2ff;
+  --accent-ruby: #e6194b;
+
+  --text-main: #f0f4f8;
+  --text-muted: #94a3b8;
+  --text-gold: #f3e5ab;
+
+  --font-heading: 'Cinzel', serif;
+  --font-body: 'Inter', sans-serif;
+
+  --shadow-gold: 0 10px 30px rgba(212, 175, 55, 0.15);
+  --shadow-glass: 0 20px 40px rgba(0, 0, 0, 0.5);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  user-select: none;
+}
+
+html, body {
+  background-color: var(--bg-primary);
+  color: var(--text-main);
+  font-family: var(--font-body);
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: var(--accent-gold) var(--bg-primary);
+}
+
+/* 3D WebGL Canvas Layer (Fixed Background) */
+#canvas-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 1;
+  pointer-events: auto;
+}
+
+/* Header Navigation */
+header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem 3rem;
+  z-index: 10;
+  background: linear-gradient(180deg, rgba(11, 12, 16, 0.9) 0%, rgba(11, 12, 16, 0) 100%);
+  backdrop-filter: blur(8px);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.brand-crest {
+  width: 32px;
+  height: 32px;
+  border: 1.5px solid var(--accent-gold);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent-gold);
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 0.9rem;
+  box-shadow: 0 0 15px var(--border-gold);
+}
+
+.brand-title {
+  font-family: var(--font-heading);
+  font-size: 1.4rem;
+  font-weight: 700;
+  letter-spacing: 0.25em;
+  background: linear-gradient(135deg, #ffffff 0%, var(--accent-gold) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.btn-nav {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-gold);
+  color: var(--text-main);
+  padding: 0.6rem 1.2rem;
+  border-radius: 30px;
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+}
+
+.btn-nav:hover {
+  background: var(--accent-gold);
+  color: #000;
+  box-shadow: var(--shadow-gold);
+  transform: translateY(-2px);
+}
+
+.btn-nav.active {
+  background: var(--accent-gold);
+  color: #000;
+}
+
+/* Scroll Story Overlay Container */
+.scroll-container {
+  position: relative;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.story-section {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  padding: 4rem 10%;
+  pointer-events: none;
+}
+
+.story-card {
+  max-width: 480px;
+  background: var(--bg-glass);
+  border: 1px solid var(--border-gold);
+  border-radius: 20px;
+  padding: 2.5rem;
+  backdrop-filter: blur(20px);
+  box-shadow: var(--shadow-glass);
+  pointer-events: auto;
+  transform: translateY(30px);
+  opacity: 0;
+  transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.story-card.visible {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+.section-tag {
+  font-family: var(--font-heading);
+  font-size: 0.75rem;
+  letter-spacing: 0.3em;
+  color: var(--accent-gold);
+  text-transform: uppercase;
+  margin-bottom: 0.75rem;
+}
+
+.story-card h2 {
+  font-family: var(--font-heading);
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1.2;
+  margin-bottom: 1rem;
+  color: #fff;
+}
+
+.story-card p {
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  line-height: 1.6;
+  margin-bottom: 1.5rem;
+}
+
+.spec-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  border-top: 1px solid var(--border-subtle);
+  padding-top: 1rem;
+}
+
+.spec-item {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85rem;
+}
+
+.spec-label {
+  color: var(--text-muted);
+}
+
+.spec-value {
+  color: var(--accent-gold-bright);
+  font-weight: 600;
+}
+
+/* Interactive Part Tooltip Inspector (HUD) */
+#part-inspector {
+  position: fixed;
+  bottom: 2rem;
+  left: 2rem;
+  z-index: 12;
+  max-width: 380px;
+  background: var(--bg-glass);
+  border: 1px solid var(--accent-gold);
+  border-radius: 16px;
+  padding: 1.5rem;
+  backdrop-filter: blur(25px);
+  box-shadow: var(--shadow-glass), 0 0 20px rgba(212, 175, 55, 0.2);
+  transition: all 0.4s ease;
+  transform: translateY(120%);
+  opacity: 0;
+  pointer-events: none;
+}
+
+#part-inspector.active {
+  transform: translateY(0);
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.inspector-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.inspector-title {
+  font-family: var(--font-heading);
+  font-size: 1.1rem;
+  color: var(--accent-gold-bright);
+  font-weight: 700;
+}
+
+.inspector-category {
+  font-size: 0.7rem;
+  padding: 0.2rem 0.6rem;
+  background: rgba(212, 175, 55, 0.15);
+  border: 1px solid var(--border-gold);
+  border-radius: 12px;
+  color: var(--text-gold);
+}
+
+.inspector-desc {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+  margin-bottom: 0.75rem;
+}
+
+.inspector-meta {
+  font-size: 0.78rem;
+  color: var(--accent-cyan);
+  font-family: monospace;
+}
+
+/* Bottom Exploded View Controller Bar */
+#exploded-controls {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background: var(--bg-glass);
+  border: 1px solid var(--border-gold);
+  border-radius: 30px;
+  padding: 0.75rem 1.5rem;
+  backdrop-filter: blur(20px);
+  box-shadow: var(--shadow-glass);
+}
+
+.control-label {
+  font-size: 0.8rem;
+  letter-spacing: 0.1em;
+  color: var(--text-gold);
+  font-family: var(--font-heading);
+}
+
+input[type="range"] {
+  accent-color: var(--accent-gold);
+  cursor: pointer;
+}
+
+/* Material Lab Customizer Drawer */
+#material-lab {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 420px;
+  height: 100vh;
+  background: var(--bg-glass);
+  border-left: 1px solid var(--border-gold);
+  z-index: 20;
+  padding: 2.5rem 2rem;
+  backdrop-filter: blur(30px);
+  box-shadow: -10px 0 40px rgba(0, 0, 0, 0.6);
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  overflow-y: auto;
+  transform: translateX(100%);
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+#material-lab.open {
+  transform: translateX(0);
+}
+
+.lab-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--border-subtle);
+  padding-bottom: 1rem;
+}
+
+.lab-title {
+  font-family: var(--font-heading);
+  font-size: 1.3rem;
+  color: var(--accent-gold);
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 1.5rem;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.close-btn:hover {
+  color: #fff;
+}
+
+.preset-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.75rem;
+}
+
+.preset-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  padding: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.preset-card:hover, .preset-card.active {
+  border-color: var(--accent-gold);
+  background: rgba(212, 175, 55, 0.1);
+  transform: translateX(-4px);
+}
+
+.preset-color-swatch {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 0 10px rgba(0,0,0,0.5);
+}
+
+.preset-info h4 {
+  font-family: var(--font-heading);
+  font-size: 0.95rem;
+  color: #fff;
+}
+
+.preset-info p {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+/* Save & Showcase Modals */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(15px);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.modal-overlay.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.modal-content {
+  background: var(--bg-glass);
+  border: 1px solid var(--border-gold);
+  border-radius: 24px;
+  padding: 2.5rem;
+  max-width: 600px;
+  width: 90%;
+  box-shadow: var(--shadow-glass);
+  position: relative;
+  max-height: 85vh;
+  overflow-y: auto;
+}
+
+.form-group {
+  margin-bottom: 1.25rem;
+}
+
+.form-group label {
+  display: block;
+  font-size: 0.85rem;
+  color: var(--text-gold);
+  margin-bottom: 0.4rem;
+  font-family: var(--font-heading);
+}
+
+.form-input {
+  width: 100%;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid var(--border-gold);
+  border-radius: 10px;
+  padding: 0.8rem 1rem;
+  color: #fff;
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  outline: none;
+}
+
+.form-input:focus {
+  border-color: var(--accent-gold-bright);
+  box-shadow: 0 0 10px var(--border-gold);
+}
+
+.btn-primary {
+  width: 100%;
+  background: linear-gradient(135deg, var(--accent-gold) 0%, var(--accent-gold-bright) 100%);
+  color: #000;
+  border: none;
+  padding: 0.9rem;
+  border-radius: 12px;
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 1rem;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+  box-shadow: var(--shadow-gold);
+  transform: translateY(-2px);
+}
+
+/* Gallery Showcase Cards */
+.gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.gallery-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border-subtle);
+  border-radius: 16px;
+  padding: 1.2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  transition: all 0.3s ease;
+}
+
+.gallery-card:hover {
+  border-color: var(--accent-gold);
+  transform: translateY(-3px);
+}
+
+.gallery-card h4 {
+  font-family: var(--font-heading);
+  color: var(--accent-gold-bright);
+}
+
+.gallery-card p {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 0.5rem;
+  font-size: 0.8rem;
+}
+
+.like-btn {
+  background: none;
+  border: 1px solid var(--border-subtle);
+  color: var(--accent-ruby);
+  padding: 0.3rem 0.8rem;
+  border-radius: 20px;
+  cursor: pointer;
+}
+
+.load-btn {
+  background: var(--border-gold);
+  border: none;
+  color: #000;
+  padding: 0.3rem 0.8rem;
+  border-radius: 20px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* Mobile Responsive Adjustments */
+@media (max-width: 768px) {
+  header {
+    padding: 1rem 1.5rem;
+  }
+  .brand-title {
+    font-size: 1rem;
+  }
+  .story-card {
+    padding: 1.5rem;
+  }
+  #material-lab {
+    width: 100vw;
+  }
+  #part-inspector {
+    left: 1rem;
+    right: 1rem;
+    max-width: none;
+  }
+}
