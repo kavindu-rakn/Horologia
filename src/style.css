@@ -503,10 +503,6 @@ body {
 .gallery-card p { font-size: 0.75rem; color: var(--text-secondary); line-height: 1.5; margin-bottom: 12px; }
 .card-footer { display: flex; gap: 8px; }
 
-/* Firebase guide */
-.firebase-guide ol { padding-left: 18px; color: var(--text-secondary); font-size: 0.82rem; line-height: 2; margin-bottom: 20px; }
-.firebase-guide code { background: rgba(255,255,255,0.08); padding: 2px 6px; border-radius: 4px; font-size: 0.78rem; color: var(--accent-gold); }
-
 /* ── Shared Form Styles ── */
 form { display: flex; flex-direction: column; gap: 14px; }
 label { font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-muted); }

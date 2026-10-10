@@ -3,12 +3,12 @@ import { SceneManager } from './components/SceneManager.js';
 import { WatchModel } from './components/WatchModel.js';
 import { RaycasterManager } from './components/RaycasterManager.js';
 import { soundEngine } from './audio/SoundEngine.js';
-import { FirebaseManager } from './components/FirebaseManager.js';
+import { DesignStorageManager } from './core/DesignStorageManager.js';
+import { appStore } from './core/Store.js';
 import { MATERIAL_SCHEMES } from './utils/constants.js';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import Lenis from 'lenis';
-// confetti removed — not appropriate for a luxury watch experience
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -104,7 +104,15 @@ class HorologiaApp {
     this.container = document.getElementById('canvas-container');
     this.sceneManager = new SceneManager(this.container);
     this.watchModel = new WatchModel(this.sceneManager.scene);
-    this.firebaseManager = new FirebaseManager();
+    this.storageManager = new DesignStorageManager();
+
+    // Check URL parameters for custom shared design
+    const urlParams = new URLSearchParams(window.location.search);
+    const initialSchemeId = urlParams.get('scheme');
+    if (initialSchemeId) {
+      const match = MATERIAL_SCHEMES.find(s => s.id === initialSchemeId);
+      if (match) this.watchModel.applyMaterialScheme(match);
+    }
 
     this.currentChapter = 0;
     this.lastTime = performance.now();
@@ -122,7 +130,7 @@ class HorologiaApp {
     this.initDragRotate();   // ← drag-to-inspect any angle
     this.initMaterialLab();
     this.initShowcaseGallery();
-    this.initFirebaseGuide();
+    this.initShareButton();
 
     // Activate hero chapter
     this.activateChapter(0, false);
@@ -382,10 +390,10 @@ class HorologiaApp {
       const title = document.getElementById('watch-title').value;
       const creator = document.getElementById('creator-name').value;
       const desc = document.getElementById('design-desc').value;
-      await this.firebaseManager.saveDesign({ title, creator, description: desc, schemeId: this.watchModel.currentScheme.id });
+      await this.storageManager.saveDesign({ title, creator, description: desc, schemeId: this.watchModel.currentScheme.id });
       saveModal.classList.remove('open');
       saveForm.reset();
-      // Saved — subtle notification without confetti
+      // Saved — subtle luxury notification
       const card = document.getElementById('chapter-card');
       if (card) {
         card.style.boxShadow = '0 0 40px rgba(201, 164, 74, 0.6)';
@@ -410,7 +418,7 @@ class HorologiaApp {
 
   async renderShowcaseCards(container) {
     container.innerHTML = `<p style="color: var(--text-muted); grid-column: 1/-1;">Loading community watches...</p>`;
-    const designs = await this.firebaseManager.fetchCommunityDesigns();
+    const designs = await this.storageManager.fetchCommunityDesigns();
     container.innerHTML = designs.map(d => `
       <div class="gallery-card">
         <h4>${d.title}</h4>
@@ -433,30 +441,28 @@ class HorologiaApp {
     });
     container.querySelectorAll('.like-btn').forEach(btn => {
       btn.addEventListener('click', async () => {
-        await this.firebaseManager.likeDesign(btn.dataset.id);
+        await this.storageManager.likeDesign(btn.dataset.id);
         await this.renderShowcaseCards(container);
       });
     });
   }
 
-  // ── Firebase Guide ───────────────────────────────────────────────────────
-  initFirebaseGuide() {
-    const guideModal = document.getElementById('firebase-modal');
-    const btnGuide = document.getElementById('btn-firebase-guide');
-    const btnCloseGuide = document.getElementById('btn-close-firebase');
-    const configForm = document.getElementById('firebase-config-form');
+  // ── Share Current Timepiece Build ─────────────────────────────────────────
+  initShareButton() {
+    const btnShare = document.getElementById('btn-share-build');
+    if (!btnShare) return;
 
-    btnGuide.addEventListener('click', () => guideModal.classList.add('open'));
-    btnCloseGuide.addEventListener('click', () => guideModal.classList.remove('open'));
-
-    configForm.addEventListener('submit', (e) => {
-      e.preventDefault();
-      try {
-        const parsed = JSON.parse(document.getElementById('firebase-config-json').value);
-        const ok = this.firebaseManager.connect(parsed);
-        if (ok) { alert('⚡ Firebase connected!'); guideModal.classList.remove('open'); }
-        else alert('⚠️ Invalid Firebase config.');
-      } catch { alert('⚠️ Invalid JSON format.'); }
+    btnShare.addEventListener('click', () => {
+      const url = new URL(window.location.href);
+      url.searchParams.set('scheme', this.watchModel.currentScheme.id);
+      navigator.clipboard.writeText(url.toString()).then(() => {
+        const origText = btnShare.textContent;
+        btnShare.textContent = '✓ Copied!';
+        soundEngine.playRatchetWinding();
+        setTimeout(() => { btnShare.textContent = origText; }, 2000);
+      }).catch(() => {
+        prompt('Copy your custom timepiece URL:', url.toString());
+      });
     });
   }
 

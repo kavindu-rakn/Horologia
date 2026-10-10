@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Horologia — Exploded 3D Mechanical Watch</title>
   <meta name="description" content="A cinematic scroll-driven journey through the anatomy of a haute horlogerie mechanical watch. Explore every gear, jewel, and escapement in stunning 3D.">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="alternate icon" href="/favicon.ico">
   <link rel="stylesheet" href="/src/style.css">
 </head>
 <body>
@@ -27,9 +29,9 @@
         <span id="sound-icon">🔊</span>
         <span id="sound-label">Audio On</span>
       </button>
-      <button id="btn-customizer" class="nav-btn">✦ Material Lab</button>
+      <button id="btn-customizer" class="nav-btn">✦ Atelier Studio</button>
       <button id="btn-showcase" class="nav-btn">◈ Showcase</button>
-      <button id="btn-firebase-guide" class="nav-btn">⚡ Firebase</button>
+      <button id="btn-share-build" class="nav-btn" title="Share current timepiece">↗ Share</button>
     </nav>
   </header>
 
@@ -133,32 +135,6 @@
         <button id="btn-close-showcase" class="icon-btn">✕</button>
       </div>
       <div id="gallery-container"></div>
-    </div>
-  </div>
-
-  <!-- ═══════════════════════════════════════════
-       FIREBASE GUIDE MODAL
-  ═══════════════════════════════════════════ -->
-  <div id="firebase-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="firebase-modal-title">
-    <div class="modal-box">
-      <div class="modal-header">
-        <h3 id="firebase-modal-title">⚡ Connect Firebase</h3>
-        <button id="btn-close-firebase" class="icon-btn">✕</button>
-      </div>
-      <div class="firebase-guide">
-        <ol>
-          <li>Go to <strong>console.firebase.google.com</strong></li>
-          <li>Click <strong>Add project</strong> → name it "Horologia"</li>
-          <li>Enable <strong>Firestore Database</strong> in test mode</li>
-          <li>Go to <strong>Project Settings → Your apps → Web</strong></li>
-          <li>Copy the <code>firebaseConfig</code> object and paste it below</li>
-        </ol>
-        <form id="firebase-config-form">
-          <label for="firebase-config-json">Firebase Config JSON</label>
-          <textarea id="firebase-config-json" rows="8" placeholder='{&#10;  "apiKey": "...",&#10;  "authDomain": "...",&#10;  "projectId": "..."&#10;}'></textarea>
-          <button type="submit" class="btn-primary">Connect ⚡</button>
-        </form>
-      </div>
     </div>
   </div>
 
