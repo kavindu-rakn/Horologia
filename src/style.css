@@ -540,7 +540,7 @@ input[type="text"]:focus, textarea:focus { border-color: var(--accent-gold); }
   box-shadow: 0 8px 24px rgba(201, 164, 74, 0.35);
 }
 
-.like-btn, .load-btn {
+.like-btn, .load-btn, .export-btn {
   background: rgba(255,255,255,0.05);
   border: 1px solid var(--glass-border);
   color: var(--text-secondary);
@@ -553,6 +553,7 @@ input[type="text"]:focus, textarea:focus { border-color: var(--accent-gold); }
 }
 .like-btn:hover { border-color: #e05a7a; color: #e05a7a; }
 .load-btn:hover { border-color: var(--accent-gold); color: var(--accent-gold); }
+.export-btn:hover { border-color: #47bfff; color: #47bfff; }
 
 .icon-btn {
   background: transparent;
