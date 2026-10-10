@@ -34,12 +34,12 @@ export class Store {
 
     changedKeys.forEach(key => {
       const callbacks = this.listeners.get(key) || [];
-      callbacks.forEach(cb => cb(this.state[key], this.state));
+      [...callbacks].forEach(cb => cb(this.state[key], this.state));
     });
 
     // Notify wildcard subscribers
     const wildcard = this.listeners.get('*') || [];
-    wildcard.forEach(cb => cb(this.state, changedKeys));
+    [...wildcard].forEach(cb => cb(this.state, changedKeys));
   }
 
   /**
@@ -57,6 +57,7 @@ export class Store {
       if (list) {
         const index = list.indexOf(callback);
         if (index > -1) list.splice(index, 1);
+        if (list.length === 0) this.listeners.delete(key);
       }
     };
   }

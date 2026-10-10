@@ -98,6 +98,16 @@ const CHAPTERS = [
   },
 ];
 
+function escapeHTML(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
 // ── Main App ─────────────────────────────────────────────────────────────────
 class HorologiaApp {
   constructor() {
@@ -106,11 +116,10 @@ class HorologiaApp {
     this.watchModel = new WatchModel(this.sceneManager.scene);
     this.storageManager = new DesignStorageManager();
 
-    // Check URL parameters for custom shared design
-    const urlParams = new URLSearchParams(window.location.search);
-    const initialSchemeId = urlParams.get('scheme');
-    if (initialSchemeId) {
-      const match = MATERIAL_SCHEMES.find(s => s.id === initialSchemeId);
+    // Check URL parameters for custom shared design via DesignStorageManager
+    const initialConfig = this.storageManager.decodeShareableURL();
+    if (initialConfig && initialConfig.schemeId) {
+      const match = MATERIAL_SCHEMES.find(s => s.id === initialConfig.schemeId);
       if (match) this.watchModel.applyMaterialScheme(match);
     }
 
@@ -207,6 +216,7 @@ class HorologiaApp {
     if (index === this.currentChapter && animate) return;
     this.currentChapter = index;
     this.userHasRotated = false; // Reset manual rotation flag on chapter change
+    appStore.setState({ currentChapter: index });
 
     const ch = CHAPTERS[index];
     const duration = animate ? 1.6 : 0;
@@ -298,14 +308,16 @@ class HorologiaApp {
     this.raycasterManager = new RaycasterManager(
       this.sceneManager,
       this.watchModel,
-      (partInfo) => {
+      (partInfo, partId) => {
         if (partInfo) {
+          appStore.setState({ hoveredPartId: partId });
           titleEl.textContent = partInfo.name;
           catEl.textContent = partInfo.category;
           descEl.textContent = partInfo.function;
           metaEl.textContent = `${partInfo.material}${partInfo.specs ? ' · ' + partInfo.specs : ''}`;
           inspectorEl.classList.add('active');
         } else {
+          appStore.setState({ hoveredPartId: null });
           inspectorEl.classList.remove('active');
         }
       }
@@ -324,6 +336,7 @@ class HorologiaApp {
       });
       slider.addEventListener('input', (e) => {
         const val = parseFloat(e.target.value);
+        appStore.setState({ explodeProgress: val });
         if (label) label.textContent = `${Math.round(val * 100)}%`;
         this.watchModel.explodeByProgress(val);
         soundEngine.playExpansionWhoosh();
@@ -336,6 +349,7 @@ class HorologiaApp {
     btnSound.addEventListener('click', () => {
       soundEngine.init();
       const muted = soundEngine.toggleMute();
+      appStore.setState({ isMuted: muted });
       soundIcon.textContent = muted ? '🔇' : '🔊';
       soundLabel.textContent = muted ? 'Muted' : 'Audio On';
     });
@@ -350,12 +364,14 @@ class HorologiaApp {
     const presetContainer = document.getElementById('preset-container');
 
     btnCustomizer.addEventListener('click', () => {
-      labDrawer.classList.toggle('open');
+      const isOpen = labDrawer.classList.toggle('open');
       btnCustomizer.classList.toggle('active');
+      appStore.setState({ activeModal: isOpen ? 'materialLab' : null });
     });
     btnCloseLab.addEventListener('click', () => {
       labDrawer.classList.remove('open');
       btnCustomizer.classList.remove('active');
+      appStore.setState({ activeModal: null });
     });
 
     presetContainer.innerHTML = MATERIAL_SCHEMES.map(s => `
@@ -371,6 +387,7 @@ class HorologiaApp {
       const scheme = MATERIAL_SCHEMES.find(s => s.id === card.dataset.schemeId);
       if (scheme) {
         this.watchModel.applyMaterialScheme(scheme);
+        appStore.setState({ schemeId: scheme.id });
         soundEngine.playRatchetWinding();
         document.querySelectorAll('.preset-card').forEach(c => c.classList.remove('active'));
         card.classList.add('active');
@@ -421,12 +438,13 @@ class HorologiaApp {
     const designs = await this.storageManager.fetchCommunityDesigns();
     container.innerHTML = designs.map(d => `
       <div class="gallery-card">
-        <h4>${d.title}</h4>
-        <p style="font-size: 0.7rem; color: var(--accent-gold); margin-bottom: 6px;">By ${d.creator} · ${d.timestamp || 'Recently'}</p>
-        <p>${d.description || 'A bespoke Horologia movement finish.'}</p>
+        <h4>${escapeHTML(d.title)}</h4>
+        <p style="font-size: 0.7rem; color: var(--accent-gold); margin-bottom: 6px;">By ${escapeHTML(d.creator)} · ${escapeHTML(d.timestamp || 'Recently')}</p>
+        <p>${escapeHTML(d.description || 'A bespoke Horologia movement finish.')}</p>
         <div class="card-footer">
-          <button class="like-btn" data-id="${d.id}">❤ ${d.likes || 1}</button>
-          <button class="load-btn" data-scheme-id="${d.schemeId}">Load Design</button>
+          <button class="like-btn" data-id="${escapeHTML(d.id)}">❤ ${d.likes || 1}</button>
+          <button class="load-btn" data-scheme-id="${escapeHTML(d.schemeId)}">Load Design</button>
+          <button class="export-btn" data-id="${escapeHTML(d.id)}" title="Export specification JSON">⤓ JSON</button>
         </div>
       </div>
     `).join('');
@@ -445,6 +463,15 @@ class HorologiaApp {
         await this.renderShowcaseCards(container);
       });
     });
+    container.querySelectorAll('.export-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const d = designs.find(item => item.id === btn.dataset.id);
+        if (d) {
+          this.storageManager.exportDesignJSON(d);
+          soundEngine.playRatchetWinding();
+        }
+      });
+    });
   }
 
   // ── Share Current Timepiece Build ─────────────────────────────────────────
@@ -452,17 +479,32 @@ class HorologiaApp {
     const btnShare = document.getElementById('btn-share-build');
     if (!btnShare) return;
 
+    const defaultLabel = '↗ Share';
+    let resetTimer = null;
+
     btnShare.addEventListener('click', () => {
-      const url = new URL(window.location.href);
-      url.searchParams.set('scheme', this.watchModel.currentScheme.id);
-      navigator.clipboard.writeText(url.toString()).then(() => {
-        const origText = btnShare.textContent;
+      const shareUrl = this.storageManager.encodeShareableURL({
+        schemeId: this.watchModel.currentScheme.id
+      });
+
+      const handleSuccess = () => {
+        if (resetTimer) clearTimeout(resetTimer);
         btnShare.textContent = '✓ Copied!';
         soundEngine.playRatchetWinding();
-        setTimeout(() => { btnShare.textContent = origText; }, 2000);
-      }).catch(() => {
-        prompt('Copy your custom timepiece URL:', url.toString());
-      });
+        resetTimer = setTimeout(() => {
+          btnShare.textContent = defaultLabel;
+        }, 2000);
+      };
+
+      if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+        navigator.clipboard.writeText(shareUrl)
+          .then(handleSuccess)
+          .catch(() => {
+            prompt('Copy your custom timepiece URL:', shareUrl);
+          });
+      } else {
+        prompt('Copy your custom timepiece URL:', shareUrl);
+      }
     });
   }
 

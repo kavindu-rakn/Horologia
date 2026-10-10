@@ -1,29 +1,82 @@
 // Horologia — Client Persistence & Community Design Storage Manager
-// Zero external dependencies, Vercel-ready, supporting LocalStorage, JSON import/export, and URL-encoded sharing.
+// Zero external dependencies, Vercel-ready, resilient in-memory fallback, and Unicode-safe URL sharing.
 
 import { DEMO_COMMUNITY_DESIGNS } from '../utils/constants.js';
+
+/**
+ * Unicode-safe Base64 encoding
+ */
+function utf8ToBase64(str) {
+  return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, (_, p1) => String.fromCharCode('0x' + p1)));
+}
+
+/**
+ * Unicode-safe Base64 decoding
+ */
+function base64ToUtf8(str) {
+  return decodeURIComponent(
+    Array.prototype.map.call(atob(str), c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join('')
+  );
+}
 
 export class DesignStorageManager {
   constructor() {
     this.localStorageKey = 'horologia_custom_designs';
     this.userLikesKey = 'horologia_user_likes';
-    this.initFromLocalStorage();
+    this.memoryDesigns = [];
+    this.memoryLikes = new Set();
+
+    this.initStorage();
   }
 
   /**
-   * Initializes local storage with curated luxury presets if empty.
+   * Initializes storage with curated luxury presets, populating both in-memory cache and localStorage.
    */
-  initFromLocalStorage() {
+  initStorage() {
+    let savedDesigns = null;
+    let savedLikes = null;
+
     try {
-      const saved = localStorage.getItem(this.localStorageKey);
-      if (!saved) {
-        localStorage.setItem(this.localStorageKey, JSON.stringify(DEMO_COMMUNITY_DESIGNS));
+      const rawDesigns = localStorage.getItem(this.localStorageKey);
+      if (rawDesigns) {
+        savedDesigns = JSON.parse(rawDesigns);
       }
-      if (!localStorage.getItem(this.userLikesKey)) {
-        localStorage.setItem(this.userLikesKey, JSON.stringify([]));
+      const rawLikes = localStorage.getItem(this.userLikesKey);
+      if (rawLikes) {
+        savedLikes = JSON.parse(rawLikes);
       }
     } catch (e) {
-      console.warn('LocalStorage unavailable or restricted:', e);
+      console.warn('LocalStorage unavailable or restricted, running in resilient in-memory mode:', e);
+    }
+
+    if (Array.isArray(savedDesigns) && savedDesigns.length > 0) {
+      this.memoryDesigns = savedDesigns;
+    } else {
+      this.memoryDesigns = [...DEMO_COMMUNITY_DESIGNS];
+      this.persistDesigns();
+    }
+
+    if (Array.isArray(savedLikes)) {
+      this.memoryLikes = new Set(savedLikes);
+    }
+  }
+
+  /**
+   * Safe persistent sync to localStorage
+   */
+  persistDesigns() {
+    try {
+      localStorage.setItem(this.localStorageKey, JSON.stringify(this.memoryDesigns));
+    } catch (e) {
+      console.warn('Unable to persist designs to localStorage:', e);
+    }
+  }
+
+  persistLikes() {
+    try {
+      localStorage.setItem(this.userLikesKey, JSON.stringify([...this.memoryLikes]));
+    } catch (e) {
+      console.warn('Unable to persist likes to localStorage:', e);
     }
   }
 
@@ -41,13 +94,9 @@ export class DesignStorageManager {
       timestamp: 'Just now'
     };
 
-    try {
-      const existing = this.getLocalDesigns();
-      existing.unshift(newDesign);
-      localStorage.setItem(this.localStorageKey, JSON.stringify(existing));
-    } catch (e) {
-      console.error('Failed to save design to localStorage:', e);
-    }
+    // Update in-memory cache immediately
+    this.memoryDesigns.unshift(newDesign);
+    this.persistDesigns();
 
     return newDesign;
   }
@@ -57,23 +106,7 @@ export class DesignStorageManager {
    * @returns {Array} List of designs
    */
   async fetchCommunityDesigns() {
-    return this.getLocalDesigns();
-  }
-
-  /**
-   * Internal helper to retrieve and parse stored designs.
-   */
-  getLocalDesigns() {
-    try {
-      const raw = localStorage.getItem(this.localStorageKey);
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-      }
-    } catch (e) {
-      console.warn('Error reading stored designs:', e);
-    }
-    return [...DEMO_COMMUNITY_DESIGNS];
+    return [...this.memoryDesigns];
   }
 
   /**
@@ -82,30 +115,21 @@ export class DesignStorageManager {
    * @returns {number} Updated likes
    */
   async likeDesign(designId) {
-    try {
-      const designs = this.getLocalDesigns();
-      const userLikes = JSON.parse(localStorage.getItem(this.userLikesKey) || '[]');
-      
-      const target = designs.find(d => d.id === designId);
-      if (!target) return 0;
+    const target = this.memoryDesigns.find(d => d.id === designId);
+    if (!target) return 0;
 
-      const hasLiked = userLikes.includes(designId);
-      if (hasLiked) {
-        target.likes = Math.max(0, (target.likes || 1) - 1);
-        const idx = userLikes.indexOf(designId);
-        userLikes.splice(idx, 1);
-      } else {
-        target.likes = (target.likes || 0) + 1;
-        userLikes.push(designId);
-      }
-
-      localStorage.setItem(this.localStorageKey, JSON.stringify(designs));
-      localStorage.setItem(this.userLikesKey, JSON.stringify(userLikes));
-      return target.likes;
-    } catch (e) {
-      console.error('Failed to update like status:', e);
-      return 0;
+    const hasLiked = this.memoryLikes.has(designId);
+    if (hasLiked) {
+      target.likes = Math.max(0, (target.likes || 1) - 1);
+      this.memoryLikes.delete(designId);
+    } else {
+      target.likes = (target.likes || 0) + 1;
+      this.memoryLikes.add(designId);
     }
+
+    this.persistDesigns();
+    this.persistLikes();
+    return target.likes;
   }
 
   /**
@@ -115,8 +139,11 @@ export class DesignStorageManager {
    */
   encodeShareableURL(config) {
     try {
-      const serialized = encodeURIComponent(btoa(JSON.stringify(config)));
       const url = new URL(window.location.href);
+      if (config.schemeId) {
+        url.searchParams.set('scheme', config.schemeId);
+      }
+      const serialized = utf8ToBase64(JSON.stringify(config));
       url.searchParams.set('build', serialized);
       return url.toString();
     } catch (e) {
@@ -134,7 +161,11 @@ export class DesignStorageManager {
       const params = new URLSearchParams(window.location.search);
       const buildParam = params.get('build');
       if (buildParam) {
-        return JSON.parse(atob(decodeURIComponent(buildParam)));
+        return JSON.parse(base64ToUtf8(buildParam));
+      }
+      const schemeParam = params.get('scheme');
+      if (schemeParam) {
+        return { schemeId: schemeParam };
       }
     } catch (e) {
       console.warn('Failed to decode shareable URL configuration:', e);
@@ -147,12 +178,19 @@ export class DesignStorageManager {
    * @param {Object} design
    */
   exportDesignJSON(design) {
-    const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(design, null, 2));
-    const downloadAnchor = document.createElement('a');
-    downloadAnchor.setAttribute('href', dataStr);
-    downloadAnchor.setAttribute('download', `${(design.title || 'horologia-bespoke').toLowerCase().replace(/\s+/g, '-')}.json`);
-    document.body.appendChild(downloadAnchor);
-    downloadAnchor.click();
-    downloadAnchor.remove();
+    try {
+      const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(design, null, 2));
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.setAttribute('href', dataStr);
+      downloadAnchor.setAttribute(
+        'download',
+        `${(design.title || 'horologia-bespoke').toLowerCase().replace(/[^a-z0-9]+/g, '-')}.json`
+      );
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+    } catch (e) {
+      console.error('Failed to export design JSON:', e);
+    }
   }
 }
