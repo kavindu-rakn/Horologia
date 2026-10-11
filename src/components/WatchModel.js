@@ -1266,8 +1266,8 @@ export class WatchModel {
     if (this.hourHandMesh) this.hourHandMesh.rotation.z = -this.gearRotations.hours;
     if (this.mainspringGear) this.mainspringGear.rotation.z = -this.gearRotations.hours * 0.5;
 
-    // 3rd and 4th gear train ratios coupled to escapement
-    if (this.thirdGear) this.thirdGear.rotation.z = secondsRad * 2;
+    // 3rd and 4th gear train ratios coupled to escapement (counter-rotational meshing)
+    if (this.thirdGear) this.thirdGear.rotation.z = -secondsRad * 2;
     if (this.fourthGear) this.fourthGear.rotation.z = secondsRad * 4;
   }
 

@@ -35,6 +35,20 @@ class SoundEngine {
 
       // Start 28,800 VPH tick loop: 8 beats per second = exactly 125 ms
       this.startTicking();
+
+      // Pause tick scheduler when tab is hidden to prevent background throttling drift
+      document.addEventListener('visibilitychange', () => {
+        if (document.hidden) {
+          if (this.tickInterval) {
+            clearInterval(this.tickInterval);
+            this.tickInterval = null;
+          }
+        } else {
+          if (this.isTicking && !this.isMuted && !this.tickInterval) {
+            this.startTicking();
+          }
+        }
+      });
     } catch (e) {
       console.warn('Web Audio API not supported or blocked:', e);
     }
@@ -150,6 +164,12 @@ class SoundEngine {
 
     source.connect(gainNode);
     gainNode.connect(this.masterGain);
+    source.onended = () => {
+      try {
+        source.disconnect();
+        gainNode.disconnect();
+      } catch (e) {}
+    };
     source.start();
   }
 
@@ -166,6 +186,12 @@ class SoundEngine {
 
     source.connect(gainNode);
     gainNode.connect(this.masterGain);
+    source.onended = () => {
+      try {
+        source.disconnect();
+        gainNode.disconnect();
+      } catch (e) {}
+    };
     source.start();
   }
 
@@ -189,6 +215,12 @@ class SoundEngine {
 
       source.connect(gain);
       gain.connect(this.masterGain);
+      source.onended = () => {
+        try {
+          source.disconnect();
+          gain.disconnect();
+        } catch (e) {}
+      };
       source.start(now + i * 0.032);
     }
   }
@@ -201,6 +233,11 @@ class SoundEngine {
     const source = this.ctx.createBufferSource();
     source.buffer = this.whooshBuffer;
     source.connect(this.masterGain);
+    source.onended = () => {
+      try {
+        source.disconnect();
+      } catch (e) {}
+    };
     source.start();
   }
 }
