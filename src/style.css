@@ -503,10 +503,6 @@ body {
 .gallery-card p { font-size: 0.75rem; color: var(--text-secondary); line-height: 1.5; margin-bottom: 12px; }
 .card-footer { display: flex; gap: 8px; }
 
-/* Firebase guide */
-.firebase-guide ol { padding-left: 18px; color: var(--text-secondary); font-size: 0.82rem; line-height: 2; margin-bottom: 20px; }
-.firebase-guide code { background: rgba(255,255,255,0.08); padding: 2px 6px; border-radius: 4px; font-size: 0.78rem; color: var(--accent-gold); }
-
 /* ── Shared Form Styles ── */
 form { display: flex; flex-direction: column; gap: 14px; }
 label { font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-muted); }
@@ -544,7 +540,7 @@ input[type="text"]:focus, textarea:focus { border-color: var(--accent-gold); }
   box-shadow: 0 8px 24px rgba(201, 164, 74, 0.35);
 }
 
-.like-btn, .load-btn {
+.like-btn, .load-btn, .export-btn {
   background: rgba(255,255,255,0.05);
   border: 1px solid var(--glass-border);
   color: var(--text-secondary);
@@ -557,6 +553,7 @@ input[type="text"]:focus, textarea:focus { border-color: var(--accent-gold); }
 }
 .like-btn:hover { border-color: #e05a7a; color: #e05a7a; }
 .load-btn:hover { border-color: var(--accent-gold); color: var(--accent-gold); }
+.export-btn:hover { border-color: #47bfff; color: #47bfff; }
 
 .icon-btn {
   background: transparent;
