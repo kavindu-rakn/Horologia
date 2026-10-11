@@ -133,7 +133,11 @@ class HorologiaApp {
     this.isDragging = false;     // True when user drag-rotates the watch
     this.dragStart = { x: 0, y: 0 };
     this.dragRotStart = { x: 0, y: 0 };
-    this.prefersReducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches ?? false;
+    const motionQuery = window.matchMedia?.('(prefers-reduced-motion: reduce)');
+    this.prefersReducedMotion = motionQuery?.matches ?? false;
+    motionQuery?.addEventListener?.('change', (e) => {
+      this.prefersReducedMotion = e.matches;
+    });
 
     this.initSmoothScroll();
     this.initChapterEngine();
@@ -428,8 +432,9 @@ class HorologiaApp {
 
     // Global Keyboard Navigation Shortcuts & Escape Handling
     window.addEventListener('keydown', (e) => {
-      // Don't intercept if user is typing in form inputs/textarea
-      if (['INPUT', 'TEXTAREA'].includes(e.target.tagName)) return;
+      // Don't intercept if user is typing in form inputs/textarea/select or contenteditable
+      if (['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName) || e.target.isContentEditable) return;
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
 
       if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
         this.goToChapter(this.currentChapter + 1);
@@ -1071,7 +1076,8 @@ class HorologiaApp {
     // Touch pinch-to-zoom for mobile screens
     let pinchStartDist = 0;
     canvas.addEventListener('touchstart', (e) => {
-      if (e.touches.length === 2) {
+      if (e.touches.length >= 2) {
+        this.isDragging = false; // Suppress single-finger orbit rotation during pinch
         pinchStartDist = Math.hypot(
           e.touches[0].clientX - e.touches[1].clientX,
           e.touches[0].clientY - e.touches[1].clientY
@@ -1080,7 +1086,7 @@ class HorologiaApp {
     }, { passive: true });
 
     canvas.addEventListener('touchmove', (e) => {
-      if (e.touches.length === 2 && pinchStartDist > 0) {
+      if (e.touches.length >= 2 && pinchStartDist > 0) {
         const currentDist = Math.hypot(
           e.touches[0].clientX - e.touches[1].clientX,
           e.touches[0].clientY - e.touches[1].clientY
@@ -1089,6 +1095,12 @@ class HorologiaApp {
         pinchStartDist = currentDist;
         const cam = this.sceneManager.camera;
         cam.position.z = Math.max(3.0, Math.min(10.0, cam.position.z - delta));
+      }
+    }, { passive: true });
+
+    canvas.addEventListener('touchend', (e) => {
+      if (e.touches.length < 2) {
+        pinchStartDist = 0;
       }
     }, { passive: true });
 
