@@ -26,7 +26,8 @@ export class SceneManager {
       antialias: true,
       alpha: false,
       powerPreference: 'high-performance',
-      preserveDrawingBuffer: true
+      preserveDrawingBuffer: true,
+      logarithmicDepthBuffer: true
     });
     this.renderer.setSize(this.width, this.height);
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -95,13 +96,13 @@ export class SceneManager {
     this.scene.add(this.rimLight);
 
     // Front soft fill light — ensures dial textures and sub-dials are legible
-    this.fillLight = new THREE.DirectionalLight(0xfff0db, 1.2);
+    this.fillLight = new THREE.DirectionalLight(0xfff0db, 1.8);
     this.fillLight.position.set(-2, 2, 6);
     this.scene.add(this.fillLight);
 
-    // Under-chassis accent glow — illuminates movement bridges during exploded scroll
-    this.underGlow = new THREE.PointLight(0xd4af37, 0.8, 10);
-    this.underGlow.position.set(0, -1.8, 1.5);
+    // Under-chassis accent glow — illuminates movement bridges during exploded scroll (positioned behind)
+    this.underGlow = new THREE.PointLight(0xd4af37, 0.6, 8);
+    this.underGlow.position.set(0, -1.2, -0.8);
     this.scene.add(this.underGlow);
 
     // High-focus theatrical spot tracks center

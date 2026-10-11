@@ -2,7 +2,6 @@
 import { SceneManager } from './components/SceneManager.js';
 import { WatchModel } from './components/WatchModel.js';
 import { RaycasterManager } from './components/RaycasterManager.js';
-import { soundEngine } from './audio/SoundEngine.js';
 import { DesignStorageManager } from './core/DesignStorageManager.js';
 import { appStore } from './core/Store.js';
 import { MATERIAL_SCHEMES, CUSTOMIZER_OPTIONS } from './utils/constants.js';
@@ -267,21 +266,13 @@ class HorologiaApp {
     // 4. Auto-rotate toggle
     this.watchModel.autoRotate = ch.autoRotate;
 
-    // 5. Acoustic expansion whoosh on chapter transition
-    if (animate && index > 0) {
-      soundEngine.playExpansionWhoosh();
-    }
-
-    // 6. Update chapter card UI
+    // 5. Update chapter card UI
     this.updateChapterCard(index, animate);
 
     // 6. Update dot nav
     document.querySelectorAll('.dot').forEach((dot, i) => {
       dot.classList.toggle('active', i === index);
     });
-
-    // 7. Play sound
-    if (animate) soundEngine.playRatchetWinding();
   }
 
   updateChapterCard(index, animate) {
@@ -362,42 +353,20 @@ class HorologiaApp {
         appStore.setState({ explodeProgress: val });
         if (label) label.textContent = `${Math.round(val * 100)}%`;
         this.watchModel.explodeByProgress(val);
-
-        // Tactile mechanical ratchet click every 2.5% of explosion
-        const currentStep = Math.floor(val * 40);
-        if (currentStep !== lastSliderStep) {
-          lastSliderStep = currentStep;
-          soundEngine.playRatchetTick(0.28);
-        }
       });
     }
-
-    const btnSound = document.getElementById('btn-sound');
-    const soundIcon = document.getElementById('sound-icon');
-    const soundLabel = document.getElementById('sound-label');
-    btnSound.addEventListener('click', () => {
-      soundEngine.init();
-      const muted = soundEngine.toggleMute();
-      appStore.setState({ isMuted: muted });
-      soundIcon.textContent = muted ? '🔇' : '🔊';
-      soundLabel.textContent = muted ? 'Muted' : 'Audio On';
-    });
-    window.addEventListener('click', () => soundEngine.init(), { once: true });
 
     // Kinetic Energy Flow Conduit Toggle
     const btnEnergyFlow = document.getElementById('btn-energy-flow');
     if (btnEnergyFlow) {
       btnEnergyFlow.addEventListener('click', () => {
-        soundEngine.init();
         const isActive = this.watchModel.toggleEnergyFlow();
         if (isActive) {
           btnEnergyFlow.classList.add('active');
           btnEnergyFlow.textContent = '⚡ Kinetic Flow [ON]';
-          soundEngine.playRatchetTick(0.4);
         } else {
           btnEnergyFlow.classList.remove('active');
           btnEnergyFlow.textContent = '⚡ Kinetic Flow';
-          soundEngine.playMetallicClick();
         }
       });
     }
@@ -410,7 +379,6 @@ class HorologiaApp {
         e.stopPropagation();
         const isOpen = headerNav.classList.toggle('mobile-open');
         btnMenuToggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
-        soundEngine.playMetallicClick();
       });
 
       // Close mobile menu when a nav link is clicked
@@ -442,8 +410,6 @@ class HorologiaApp {
       } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
         this.goToChapter(this.currentChapter - 1);
         e.preventDefault();
-      } else if (e.key.toLowerCase() === 'm') {
-        btnSound?.click();
       } else if (e.key.toLowerCase() === 'k' || e.key.toLowerCase() === 'f') {
         btnEnergyFlow?.click();
       } else if (e.key.toLowerCase() === 'a') {
@@ -510,7 +476,6 @@ class HorologiaApp {
       tabBespoke.setAttribute('aria-selected', 'false');
       presetsView.classList.add('active');
       bespokeView.classList.remove('active');
-      soundEngine.playRatchetTick(0.2);
     });
 
     tabBespoke.addEventListener('click', () => {
@@ -520,7 +485,6 @@ class HorologiaApp {
       tabPresets.setAttribute('aria-selected', 'false');
       bespokeView.classList.add('active');
       presetsView.classList.remove('active');
-      soundEngine.playRatchetTick(0.2);
     });
 
     btnCustomizer.addEventListener('click', () => {
@@ -528,7 +492,6 @@ class HorologiaApp {
       btnCustomizer.classList.toggle('active');
       appStore.setState({ activeModal: isOpen ? 'materialLab' : null });
       if (isOpen) {
-        soundEngine.playRatchetTick(0.3);
         this.renderBespokeCustomizer();
       }
     });
@@ -557,7 +520,6 @@ class HorologiaApp {
       if (scheme) {
         this.watchModel.applyMaterialScheme(scheme);
         appStore.setState({ schemeId: scheme.id });
-        soundEngine.playRatchetWinding();
         document.querySelectorAll('.preset-card').forEach(c => c.classList.remove('active'));
         card.classList.add('active');
         this.renderBespokeCustomizer();
@@ -571,7 +533,6 @@ class HorologiaApp {
     const btnSnapshot = document.getElementById('btn-snapshot');
     if (btnSnapshot) {
       btnSnapshot.addEventListener('click', () => {
-        soundEngine.playRatchetWinding();
         const casingOpt = this.watchModel.currentConfig.casing || 'custom';
         this.sceneManager.downloadSnapshot(`horologia-${casingOpt}-chronometer.png`);
       });
@@ -581,7 +542,6 @@ class HorologiaApp {
     const btnViewSpecs = document.getElementById('btn-view-specs');
     if (btnViewSpecs) {
       btnViewSpecs.addEventListener('click', () => {
-        soundEngine.playRatchetTick(0.3);
         this.openSpecificationModal();
       });
     }
@@ -596,7 +556,6 @@ class HorologiaApp {
     const saveSpecSummary = document.getElementById('save-spec-summary');
 
     btnOpenSave.addEventListener('click', () => {
-      soundEngine.playRatchetTick(0.3);
       // Capture live WebGL canvas thumbnail
       const thumbnailDataUrl = this.sceneManager.captureThumbnail(320, 240);
       if (savePreviewThumb && thumbnailDataUrl) {
@@ -632,7 +591,6 @@ class HorologiaApp {
 
       saveModal.classList.remove('open');
       saveForm.reset();
-      soundEngine.playRatchetWinding();
 
       // Subtle luxury notification glow
       const card = document.getElementById('chapter-card');
@@ -698,7 +656,6 @@ class HorologiaApp {
         const cat = card.dataset.cat;
         const optId = card.dataset.optId;
         this.watchModel.applyCustomOption(cat, optId);
-        soundEngine.playRatchetTick(0.28);
         this.renderBespokeCustomizer();
       });
     });
@@ -717,7 +674,6 @@ class HorologiaApp {
 
     if (btnPrint) {
       btnPrint.addEventListener('click', () => {
-        soundEngine.playRatchetWinding();
         window.print();
       });
     }
@@ -730,7 +686,6 @@ class HorologiaApp {
         });
         navigator.clipboard?.writeText(shareUrl).then(() => {
           btnShare.textContent = '✓ Link Copied!';
-          soundEngine.playRatchetWinding();
           setTimeout(() => { btnShare.textContent = '↗ Share Timepiece'; }, 2000);
         });
       });
@@ -807,7 +762,6 @@ class HorologiaApp {
     const closeModal = () => {
       if (modal && modal.classList.contains('open')) {
         modal.classList.remove('open');
-        soundEngine.playMetallicClick();
         // Restore active chapter camera framing so user isn't stuck in macro zoom
         const ch = CHAPTERS[this.currentChapter];
         if (ch) {
@@ -830,7 +784,6 @@ class HorologiaApp {
         if (this.selectedPartInfo && this.selectedPartInfo.focusCamera) {
           const { camera, lookAt } = this.selectedPartInfo.focusCamera;
           this.sceneManager.animateCamera(camera, lookAt, 1.2);
-          soundEngine.playRatchetWinding();
         }
       });
     }
@@ -889,7 +842,6 @@ class HorologiaApp {
     const galleryContainer = document.getElementById('gallery-container');
 
     btnShowcase.addEventListener('click', async () => {
-      soundEngine.playRatchetTick(0.3);
       showcaseModal.classList.add('open');
       await this.renderShowcaseCards(galleryContainer);
     });
@@ -962,7 +914,6 @@ class HorologiaApp {
           document.getElementById('showcase-modal').classList.remove('open');
 
           this.renderBespokeCustomizer();
-          soundEngine.playRatchetWinding();
 
           // Visual confirmation
           const card = document.getElementById('chapter-card');
@@ -985,7 +936,6 @@ class HorologiaApp {
             this.watchModel.applyCustomConfig(d.config);
             this.openSpecificationModal();
           }
-          soundEngine.playRatchetTick(0.3);
         }
       });
     });
@@ -994,7 +944,6 @@ class HorologiaApp {
     container.querySelectorAll('.like-btn').forEach(btn => {
       btn.addEventListener('click', async () => {
         await this.storageManager.likeDesign(btn.dataset.id);
-        soundEngine.playRatchetTick(0.2);
         await this.renderShowcaseCards(container);
       });
     });
@@ -1005,7 +954,6 @@ class HorologiaApp {
         const d = designs.find(item => item.id === btn.dataset.id);
         if (d) {
           this.storageManager.exportDesignJSON(d);
-          soundEngine.playRatchetWinding();
         }
       });
     });
@@ -1029,7 +977,6 @@ class HorologiaApp {
       const handleSuccess = () => {
         if (resetTimer) clearTimeout(resetTimer);
         btnShare.textContent = '✓ Copied!';
-        soundEngine.playRatchetWinding();
         resetTimer = setTimeout(() => {
           btnShare.textContent = defaultLabel;
         }, 2000);

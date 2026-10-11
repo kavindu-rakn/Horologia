@@ -1,6 +1,5 @@
 // Horologia - Raycasting & Interactive HUD Inspector Manager
 import * as THREE from 'three';
-import { soundEngine } from '../audio/SoundEngine.js';
 
 export class RaycasterManager {
   constructor(sceneManager, watchModel, hudCallback, clickCallback = null) {
@@ -45,7 +44,6 @@ export class RaycasterManager {
         return;
       }
       if (this.hoveredPart && this.clickCallback) {
-        soundEngine.playRatchetWinding();
         this.clickCallback(this.hoveredPart.userData.partInfo, this.hoveredPart.userData.partId);
       }
     });
@@ -83,8 +81,6 @@ export class RaycasterManager {
         this.clearHover();
         this.hoveredPart = partGroup;
         this.applyHighlight(partGroup);
-
-        soundEngine.playMetallicClick(soundEngine.ctx ? soundEngine.ctx.currentTime : 0, 0.15);
 
         if (this.hudCallback) {
           this.hudCallback(partGroup.userData.partInfo, partGroup.userData.partId);
