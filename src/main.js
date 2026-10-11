@@ -141,6 +141,7 @@ class HorologiaApp {
     this.initDragRotate();   // ← drag-to-inspect any angle
     this.initMaterialLab();
     this.initSpecificationModal();
+    this.initComponentDossierModal();
     this.initShowcaseGallery();
     this.initShareButton();
 
@@ -326,6 +327,9 @@ class HorologiaApp {
           appStore.setState({ hoveredPartId: null });
           inspectorEl.classList.remove('active');
         }
+      },
+      (partInfo, partId) => {
+        this.openComponentDossier(partInfo, partId);
       }
     );
   }
@@ -367,6 +371,24 @@ class HorologiaApp {
       soundLabel.textContent = muted ? 'Muted' : 'Audio On';
     });
     window.addEventListener('click', () => soundEngine.init(), { once: true });
+
+    // Kinetic Energy Flow Conduit Toggle
+    const btnEnergyFlow = document.getElementById('btn-energy-flow');
+    if (btnEnergyFlow) {
+      btnEnergyFlow.addEventListener('click', () => {
+        soundEngine.init();
+        const isActive = this.watchModel.toggleEnergyFlow();
+        if (isActive) {
+          btnEnergyFlow.classList.add('active');
+          btnEnergyFlow.textContent = '⚡ Kinetic Flow [ON]';
+          soundEngine.playRatchetTick(0.4);
+        } else {
+          btnEnergyFlow.classList.remove('active');
+          btnEnergyFlow.textContent = '⚡ Kinetic Flow';
+          soundEngine.playMetallicClick();
+        }
+      });
+    }
 
     // Global Escape key and backdrop dismissal for all modals and drawers
     window.addEventListener('keydown', (e) => {
@@ -697,6 +719,83 @@ class HorologiaApp {
     `;
 
     specModal.classList.add('open');
+  }
+
+  // ── Haute Horlogerie Component Dossier Modal ──────────────────────────────
+  initComponentDossierModal() {
+    const modal = document.getElementById('dossier-modal');
+    const btnClose = document.getElementById('btn-close-dossier');
+    const btnCloseFooter = document.getElementById('btn-dossier-close-footer');
+    const btnFocus = document.getElementById('btn-dossier-focus');
+
+    const closeModal = () => {
+      if (modal) modal.classList.remove('open');
+      soundEngine.playMetallicClick();
+    };
+
+    if (btnClose) btnClose.addEventListener('click', closeModal);
+    if (btnCloseFooter) btnCloseFooter.addEventListener('click', closeModal);
+
+    if (modal) {
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeModal();
+      });
+    }
+
+    if (btnFocus) {
+      btnFocus.addEventListener('click', () => {
+        if (this.selectedPartInfo && this.selectedPartInfo.focusCamera) {
+          const { camera, lookAt } = this.selectedPartInfo.focusCamera;
+          this.sceneManager.animateCamera(camera, lookAt, 1.2);
+          soundEngine.playRatchetWinding();
+        }
+      });
+    }
+  }
+
+  openComponentDossier(partInfo, partId) {
+    if (!partInfo) return;
+    this.selectedPartInfo = partInfo;
+
+    const modal = document.getElementById('dossier-modal');
+    if (!modal) return;
+
+    // Smoothly animate camera to macro focus coordinates
+    if (partInfo.focusCamera) {
+      const { camera, lookAt } = partInfo.focusCamera;
+      this.sceneManager.animateCamera(camera, lookAt, 1.4);
+    }
+
+    // Populate educational dossier metadata
+    const titleEl = document.getElementById('dossier-title');
+    const catEl = document.getElementById('dossier-category');
+    const hardnessEl = document.getElementById('dossier-hardness');
+    const materialEl = document.getElementById('dossier-material');
+    const functionEl = document.getElementById('dossier-function');
+    const specsBadgeEl = document.getElementById('dossier-specs-badge');
+    const physicsEl = document.getElementById('dossier-physics');
+    const metallurgyEl = document.getElementById('dossier-metallurgy');
+    const finishingEl = document.getElementById('dossier-finishing');
+
+    if (titleEl) titleEl.textContent = partInfo.name;
+    if (catEl) catEl.textContent = partInfo.category;
+    if (hardnessEl) hardnessEl.textContent = partInfo.hardness || 'Certified Horology Standard';
+    if (materialEl) materialEl.textContent = partInfo.material;
+    if (functionEl) functionEl.textContent = partInfo.function;
+    if (specsBadgeEl) {
+      specsBadgeEl.textContent = partInfo.specs ? `Specifications: ${partInfo.specs}` : 'Manufacture Standard';
+    }
+    if (physicsEl) {
+      physicsEl.textContent = partInfo.physicsPrinciple || 'Mechanical equilibrium and kinematic conservation of angular momentum.';
+    }
+    if (metallurgyEl) {
+      metallurgyEl.textContent = partInfo.metallurgy || 'Haute Horlogerie certified alloy with superior corrosion and fatigue resistance.';
+    }
+    if (finishingEl) {
+      finishingEl.textContent = partInfo.finishingTechnique || 'Hand-chamfered anglage, circular perlage, and mirror-polished specular bevels.';
+    }
+
+    modal.classList.add('open');
   }
 
   // ── Community Showcase Gallery ───────────────────────────────────────────

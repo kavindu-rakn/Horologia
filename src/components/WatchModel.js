@@ -267,6 +267,7 @@ export class WatchModel {
     this.buildDialAndHands(); // 9. Skeleton dial ring & faceted Dauphine hands
     this.buildDialFace();    // 10. Solid sunburst dial face
     this.buildBezelAndGlass(); // 11. Ceramic bezel & physical sapphire glass
+    this.buildEnergyFlowVisualizer(); // 12. Kinetic Energy Transmission Spline Visualizer
 
     // Initial orientation: clean 3/4 front-facing angle
     this.group.rotation.set(0.38, -0.22, 0.0);
@@ -1190,6 +1191,94 @@ export class WatchModel {
   }
 
   // ─────────────────────────────────────────────────────────────────────────
+  // 12. Kinetic Energy Flow Transmission Spline Visualizer
+  // ─────────────────────────────────────────────────────────────────────────
+  buildEnergyFlowVisualizer() {
+    this.energyFlowGroup = new THREE.Group();
+    this.energyFlowGroup.name = 'energyFlowVisualizer';
+
+    // 7 Mechanical Transmission Nodes:
+    // 1. Mainspring Barrel: (-0.42, -0.35, -0.06)
+    // 2. Center Wheel: (0.00, 0.00, -0.04)
+    // 3. Third Wheel: (0.32, 0.28, -0.02)
+    // 4. Fourth Wheel: (-0.28, 0.42, 0.00)
+    // 5. Escape Wheel: (0.10, 0.60, 0.02)
+    // 6. Pallet Fork: (-0.14, 0.52, 0.03)
+    // 7. Balance Wheel: (-0.35, 0.30, 0.05)
+    this.energyPathPoints = [
+      new THREE.Vector3(-0.42, -0.35, -0.06),
+      new THREE.Vector3(0.00, 0.00, -0.04),
+      new THREE.Vector3(0.32, 0.28, -0.02),
+      new THREE.Vector3(-0.28, 0.42, 0.00),
+      new THREE.Vector3(0.10, 0.60, 0.02),
+      new THREE.Vector3(-0.14, 0.52, 0.03),
+      new THREE.Vector3(-0.35, 0.30, 0.05)
+    ];
+
+    this.energyFlowCurve = new THREE.CatmullRomCurve3(this.energyPathPoints);
+    this.energyFlowCurve.curveType = 'centripetal';
+
+    // Glowing Conduit Tube
+    const tubeGeo = new THREE.TubeGeometry(this.energyFlowCurve, 96, 0.014, 8, false);
+    this.energyConduitMat = new THREE.MeshStandardMaterial({
+      color: 0x38bdf8,
+      emissive: 0x0284c7,
+      emissiveIntensity: 0.85,
+      transparent: true,
+      opacity: 0.55,
+      roughness: 0.2,
+      metalness: 0.6,
+      depthWrite: false
+    });
+    this.energyConduitMesh = new THREE.Mesh(tubeGeo, this.energyConduitMat);
+    this.energyFlowGroup.add(this.energyConduitMesh);
+
+    // Node markers at gear pivots
+    const nodeGeo = new THREE.SphereGeometry(0.032, 12, 12);
+    const nodeMat = new THREE.MeshStandardMaterial({
+      color: 0x67e8f9,
+      emissive: 0x38bdf8,
+      emissiveIntensity: 1.6,
+      metalness: 0.8,
+      roughness: 0.15
+    });
+    this.energyPathPoints.forEach((pt) => {
+      const nodeMesh = new THREE.Mesh(nodeGeo, nodeMat);
+      nodeMesh.position.copy(pt);
+      this.energyFlowGroup.add(nodeMesh);
+    });
+
+    // Instanced Photons travelling along curve
+    this.photonCount = 24;
+    const photonGeo = new THREE.SphereGeometry(0.022, 12, 12);
+    this.photonMat = new THREE.MeshStandardMaterial({
+      color: 0xe0f2fe,
+      emissive: 0x38bdf8,
+      emissiveIntensity: 2.8,
+      roughness: 0.1,
+      metalness: 0.8
+    });
+    this.energyPhotons = new THREE.InstancedMesh(photonGeo, this.photonMat, this.photonCount);
+    this.energyPhotons.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+    this.energyFlowGroup.add(this.energyPhotons);
+
+    this.photonDummy = new THREE.Object3D();
+    this.energyProgress = 0;
+    this.isEnergyFlowActive = false;
+    this.energyFlowGroup.visible = false;
+
+    this.group.add(this.energyFlowGroup);
+  }
+
+  toggleEnergyFlow(forceState = null) {
+    this.isEnergyFlowActive = (forceState !== null) ? forceState : !this.isEnergyFlowActive;
+    if (this.energyFlowGroup) {
+      this.energyFlowGroup.visible = this.isEnergyFlowActive;
+    }
+    return this.isEnergyFlowActive;
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
   // CHAPTER ENGINE — Scrubbing parts to target explosion positions
   // ─────────────────────────────────────────────────────────────────────────
   explodeToChapter(chapterIndex, duration = 1.6) {
@@ -1222,6 +1311,13 @@ export class WatchModel {
         assembled.z + sT.z + (eT.z - sT.z) * chapterProgress
       );
     });
+
+    // Gracefully fade energy flow visualizer if watch is exploded
+    if (this.energyFlowGroup && this.isEnergyFlowActive && this.energyConduitMat) {
+      const fade = Math.max(0, 1 - clampedProgress * 3.5);
+      this.energyConduitMat.opacity = 0.55 * fade;
+      this.energyFlowGroup.visible = (fade > 0.02);
+    }
   }
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -1276,6 +1372,26 @@ export class WatchModel {
     // 3rd and 4th gear train ratios coupled to escapement (counter-rotational meshing)
     if (this.thirdGear) this.thirdGear.rotation.z = -secondsRad * 2;
     if (this.fourthGear) this.fourthGear.rotation.z = secondsRad * 4;
+
+    // Advance photonic pulses along kinetic energy flow spline
+    if (this.isEnergyFlowActive && this.energyFlowCurve && this.energyPhotons) {
+      this.energyProgress = (this.energyProgress + delta * 0.35) % 1.0;
+
+      for (let i = 0; i < this.photonCount; i++) {
+        const t = ((i / this.photonCount) + this.energyProgress) % 1.0;
+        const pos = this.energyFlowCurve.getPointAt(t);
+        this.photonDummy.position.copy(pos);
+        const pulse = 0.8 + 0.35 * Math.sin(t * Math.PI * 6 + this.energyProgress * Math.PI * 4);
+        this.photonDummy.scale.set(pulse, pulse, pulse);
+        this.photonDummy.updateMatrix();
+        this.energyPhotons.setMatrixAt(i, this.photonDummy.matrix);
+      }
+      this.energyPhotons.instanceMatrix.needsUpdate = true;
+
+      if (this.energyConduitMat) {
+        this.energyConduitMat.emissiveIntensity = 0.65 + 0.35 * Math.sin(this.energyProgress * Math.PI * 8);
+      }
+    }
   }
 
   // ─────────────────────────────────────────────────────────────────────────

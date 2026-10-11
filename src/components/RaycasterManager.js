@@ -3,10 +3,11 @@ import * as THREE from 'three';
 import { soundEngine } from '../audio/SoundEngine.js';
 
 export class RaycasterManager {
-  constructor(sceneManager, watchModel, hudCallback) {
+  constructor(sceneManager, watchModel, hudCallback, clickCallback = null) {
     this.sceneManager = sceneManager;
     this.watchModel = watchModel;
     this.hudCallback = hudCallback;
+    this.clickCallback = clickCallback;
 
     this.raycaster = new THREE.Raycaster();
     this.mouse = new THREE.Vector2(-999, -999);
@@ -26,9 +27,14 @@ export class RaycasterManager {
       if (this.hudCallback) this.hudCallback(null, null);
     });
 
-    window.addEventListener('click', () => {
-      if (this.hoveredPart) {
+    window.addEventListener('click', (e) => {
+      // Don't trigger if click was on UI controls
+      if (e.target.closest('#site-header, #chapter-card, #explode-hud, #chapter-dots, #material-lab, .modal-overlay')) {
+        return;
+      }
+      if (this.hoveredPart && this.clickCallback) {
         soundEngine.playRatchetWinding();
+        this.clickCallback(this.hoveredPart.userData.partInfo, this.hoveredPart.userData.partId);
       }
     });
   }
@@ -36,11 +42,19 @@ export class RaycasterManager {
   update() {
     this.raycaster.setFromCamera(this.mouse, this.sceneManager.camera);
 
+    const isAssembled = (this.watchModel.currentChapter === 0);
     const meshesToIntersect = [];
+
     Object.values(this.watchModel.parts).forEach(partGroup => {
+      const partId = partGroup.userData.partId;
+      // In assembled mode, exclude outer sapphire crystal so users can hover dial, hands, & movement
+      if (isAssembled && partId === 'sapphireGlass') {
+        return;
+      }
+
       partGroup.traverse(child => {
         if (child.isMesh && child.visible) {
-          child.userData.parentPartId = partGroup.userData.partId;
+          child.userData.parentPartId = partId;
           meshesToIntersect.push(child);
         }
       });
@@ -75,27 +89,23 @@ export class RaycasterManager {
   }
 
   applyHighlight(partGroup) {
-    const isSapphire = partGroup.userData && partGroup.userData.partId === 'sapphireGlass';
+    const isSapphire = (partGroup.userData?.partId === 'sapphireGlass');
     partGroup.traverse(child => {
-      if (child.isMesh && child.material) {
-        // Save reference to shared original material
-        if (!child.userData.originalMaterial) {
-          child.userData.originalMaterial = child.material;
+      if (child.isMesh && child.material && child.material.emissive) {
+        if (!child.userData.hasHighlight) {
+          child.userData.prevEmissive = child.material.emissive.getHex();
+          child.userData.prevEmissiveIntensity = child.material.emissiveIntensity;
+          child.userData.hasHighlight = true;
         }
 
-        // Clone material so shared instances are not mutated globally
-        const highlightMat = child.material.clone();
-        if (isSapphire || (highlightMat.transmission && highlightMat.transmission > 0.5)) {
-          // Sapphire crystal: preserve transmission, subtle azure AR tint instead of muddy yellow
-          if (highlightMat.emissive) {
-            highlightMat.emissive.setHex(0x38bdf8);
-            highlightMat.emissiveIntensity = 0.12;
-          }
-        } else if (highlightMat.emissive) {
-          highlightMat.emissive.setHex(0xd4af37);
-          highlightMat.emissiveIntensity = 0.45;
+        if (isSapphire) {
+          child.material.emissive.setHex(0x38bdf8);
+          child.material.emissiveIntensity = 0.12;
+        } else {
+          // Subtle champagne gold rim glow without altering base PBR texture/metalness
+          child.material.emissive.setHex(0xc9a44a);
+          child.material.emissiveIntensity = 0.28;
         }
-        child.material = highlightMat;
       }
     });
   }
@@ -104,16 +114,14 @@ export class RaycasterManager {
     if (!this.hoveredPart) return;
 
     this.hoveredPart.traverse(child => {
-      if (child.isMesh && child.userData.originalMaterial) {
-        const clonedMat = child.material;
-        // Cleanly restore original shared material
-        child.material = child.userData.originalMaterial;
-        delete child.userData.originalMaterial;
-
-        // Cleanly dispose cloned material to prevent WebGL shader leak
-        if (clonedMat && clonedMat !== child.material) {
-          clonedMat.dispose();
+      if (child.isMesh && child.material && child.userData.hasHighlight) {
+        if (child.material.emissive) {
+          child.material.emissive.setHex(child.userData.prevEmissive);
+          child.material.emissiveIntensity = child.userData.prevEmissiveIntensity;
         }
+        delete child.userData.prevEmissive;
+        delete child.userData.prevEmissiveIntensity;
+        delete child.userData.hasHighlight;
       }
     });
 

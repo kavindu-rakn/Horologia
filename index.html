@@ -29,6 +29,7 @@
         <span id="sound-icon">🔊</span>
         <span id="sound-label">Audio On</span>
       </button>
+      <button id="btn-energy-flow" class="nav-btn" title="Toggle Kinetic Energy Flow Conduit">⚡ Kinetic Flow</button>
       <button id="btn-customizer" class="nav-btn">✦ Atelier Studio</button>
       <button id="btn-showcase" class="nav-btn">◈ Showcase</button>
       <button id="btn-share-build" class="nav-btn" title="Share current timepiece">↗ Share</button>
@@ -81,6 +82,7 @@
     <h3 id="inspector-title"></h3>
     <p id="inspector-desc"></p>
     <div id="inspector-meta"></div>
+    <div class="inspector-hint">Click part to inspect dossier &amp; focus 🔍</div>
   </div>
 
   <!-- ═══════════════════════════════════════════
@@ -207,6 +209,79 @@
       </div>
       <p class="showcase-description">Explore bespoke timepieces designed by collectors worldwide. Fork any configuration into your Atelier to customize and make it your own.</p>
       <div id="gallery-container"></div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       HAUTE HORLOGERIE COMPONENT DOSSIER MODAL
+  ═══════════════════════════════════════════ -->
+  <div id="dossier-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="dossier-title">
+    <div class="modal-box modal-wide dossier-box">
+      <div class="modal-header">
+        <div>
+          <span class="modal-eyebrow">Horological Anatomy Dossier</span>
+          <h3 id="dossier-title">Component Name</h3>
+        </div>
+        <button id="btn-close-dossier" class="icon-btn" aria-label="Close dossier">✕</button>
+      </div>
+
+      <div class="dossier-body">
+        <div class="dossier-hero-row">
+          <div class="dossier-stat-pill">
+            <span class="dossier-stat-label">Category</span>
+            <span id="dossier-category" class="dossier-stat-value">-</span>
+          </div>
+          <div class="dossier-stat-pill">
+            <span class="dossier-stat-label">Hardness / Rating</span>
+            <span id="dossier-hardness" class="dossier-stat-value">-</span>
+          </div>
+          <div class="dossier-stat-pill">
+            <span class="dossier-stat-label">Primary Metallurgy</span>
+            <span id="dossier-material" class="dossier-stat-value">-</span>
+          </div>
+        </div>
+
+        <!-- Educational Dossier Sections -->
+        <div class="dossier-grid">
+          <div class="dossier-section-card">
+            <div class="dossier-section-header">
+              <span class="dossier-icon">⚙️</span>
+              <h4>Mechanical Function &amp; Anatomy</h4>
+            </div>
+            <p id="dossier-function" class="dossier-text"></p>
+            <div id="dossier-specs-badge" class="dossier-badge-specs"></div>
+          </div>
+
+          <div class="dossier-section-card">
+            <div class="dossier-section-header">
+              <span class="dossier-icon">🔬</span>
+              <h4>Physics &amp; Kinematic Principle</h4>
+            </div>
+            <p id="dossier-physics" class="dossier-text"></p>
+          </div>
+
+          <div class="dossier-section-card">
+            <div class="dossier-section-header">
+              <span class="dossier-icon">⚗️</span>
+              <h4>Metallurgy &amp; Material Science</h4>
+            </div>
+            <p id="dossier-metallurgy" class="dossier-text"></p>
+          </div>
+
+          <div class="dossier-section-card">
+            <div class="dossier-section-header">
+              <span class="dossier-icon">💎</span>
+              <h4>Haute Horlogerie Finissage</h4>
+            </div>
+            <p id="dossier-finishing" class="dossier-text"></p>
+          </div>
+        </div>
+      </div>
+
+      <div class="dossier-footer">
+        <button id="btn-dossier-focus" class="btn-secondary">Center &amp; Focus Macro Lens 🔍</button>
+        <button id="btn-dossier-close-footer" class="btn-primary">Return to Movement</button>
+      </div>
     </div>
   </div>
 
