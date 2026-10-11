@@ -167,12 +167,18 @@ export class SceneManager {
     bottomBounce.rotation.x = -Math.PI / 2;
     envScene.add(bottomBounce);
 
-    // 5. Pinpoint Specular Sparkle Lights
-    const glint1 = new THREE.PointLight(0xffffff, 1.8, 80);
+    // 5. Pinpoint Specular Sparkle Glint Meshes (baked into PMREM environment map)
+    const glint1 = new THREE.Mesh(
+      new THREE.SphereGeometry(1.2, 16, 16),
+      new THREE.MeshBasicMaterial({ color: 0xffffff })
+    );
     glint1.position.set(10, 10, 8);
     envScene.add(glint1);
 
-    const glint2 = new THREE.PointLight(0xffdf99, 1.2, 80);
+    const glint2 = new THREE.Mesh(
+      new THREE.SphereGeometry(0.9, 16, 16),
+      new THREE.MeshBasicMaterial({ color: 0xffdf99 })
+    );
     glint2.position.set(-8, 6, -8);
     envScene.add(glint2);
 

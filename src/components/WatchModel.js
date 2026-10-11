@@ -1190,9 +1190,15 @@ export class WatchModel {
 
   explodeByProgress(progress) {
     const totalChapters = 6;
-    const chapterFloat = progress * totalChapters;
-    const chapter = Math.min(Math.floor(chapterFloat), totalChapters - 1);
-    const chapterProgress = chapterFloat - Math.floor(chapterFloat);
+    const clampedProgress = Math.max(0, Math.min(1, progress));
+    const chapterFloat = clampedProgress * totalChapters;
+    let chapter = Math.floor(chapterFloat);
+    let chapterProgress = chapterFloat - chapter;
+
+    if (chapter >= totalChapters) {
+      chapter = totalChapters - 1;
+      chapterProgress = 1.0;
+    }
 
     const startTargets = CHAPTER_TARGETS[chapter] || {};
     const endTargets = CHAPTER_TARGETS[Math.min(chapter + 1, totalChapters)] || {};
