@@ -248,7 +248,12 @@ class HorologiaApp {
     // 4. Auto-rotate toggle
     this.watchModel.autoRotate = ch.autoRotate;
 
-    // 5. Update chapter card UI
+    // 5. Acoustic expansion whoosh on chapter transition
+    if (animate && index > 0) {
+      soundEngine.playExpansionWhoosh();
+    }
+
+    // 6. Update chapter card UI
     this.updateChapterCard(index, animate);
 
     // 6. Update dot nav
@@ -329,12 +334,19 @@ class HorologiaApp {
       slider.addEventListener('pointerup', () => {
         setTimeout(() => { this.manualControl = false; }, 2000);
       });
+      let lastSliderStep = 0;
       slider.addEventListener('input', (e) => {
         const val = parseFloat(e.target.value);
         appStore.setState({ explodeProgress: val });
         if (label) label.textContent = `${Math.round(val * 100)}%`;
         this.watchModel.explodeByProgress(val);
-        soundEngine.playExpansionWhoosh();
+
+        // Tactile mechanical ratchet click every 2.5% of explosion
+        const currentStep = Math.floor(val * 40);
+        if (currentStep !== lastSliderStep) {
+          lastSliderStep = currentStep;
+          soundEngine.playRatchetTick(0.28);
+        }
       });
     }
 
@@ -573,5 +585,5 @@ class HorologiaApp {
 }
 
 window.addEventListener('DOMContentLoaded', () => {
-  new HorologiaApp();
+  window.horologiaApp = new HorologiaApp();
 });

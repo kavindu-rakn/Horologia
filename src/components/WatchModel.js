@@ -769,6 +769,7 @@ export class WatchModel {
 
     pf.position.set(-0.14, 0.52, 0.02);
     escGroup.add(pf);
+    this.palletForkMesh = pf;
 
     this.registerPart('balanceWheel', escGroup, WATCH_PARTS.BALANCE_WHEEL);
   }
@@ -1217,33 +1218,57 @@ export class WatchModel {
   }
 
   // ─────────────────────────────────────────────────────────────────────────
-  // KINEMATIC SIMULATION (28,800 VPH / 4 Hz precision)
+  // KINEMATIC SIMULATION (28,800 VPH / 4 Hz Escapement Synchronization)
   // ─────────────────────────────────────────────────────────────────────────
   updateKinematics(delta) {
-    // 4 Hz Balance Wheel (28,800 VPH): 8 ticks per second, 8 * pi radians/sec
+    // 4 Hz Balance Wheel (28,800 VPH): 8 vibrations per second = 8 * pi radians/sec
     this.gearRotations.balance += delta * (Math.PI * 8);
+    const balancePhase = this.gearRotations.balance;
+    const balanceSin = Math.sin(balancePhase);
+
+    // Harmonic oscillation of Glucydur balance wheel & hairspring
     if (this.balanceWheelMesh) {
-      this.balanceWheelMesh.rotation.z = Math.sin(this.gearRotations.balance) * 0.78;
+      this.balanceWheelMesh.rotation.z = balanceSin * 0.78;
     }
 
-    // Seconds Hand & Escapement
-    this.gearRotations.seconds += delta * (Math.PI * 2 / 60);
-    if (this.secHandMesh) this.secHandMesh.rotation.z = -this.gearRotations.seconds;
-    if (this.escapeGear) this.escapeGear.rotation.z = this.gearRotations.seconds * 6;
+    // Swiss Lever Pallet Fork snaps between banking pins during center zero-crossings
+    if (this.palletForkMesh) {
+      this.palletForkMesh.rotation.z = Math.tanh(balanceSin * 6) * 0.14;
+    }
 
-    // Minutes Hand & Center Gear
+    // 8-beats-per-second mechanical stepping for Escape Wheel and Seconds Hand
+    // 1 tick = 1 semi-oscillation = pi radians of balance phase (8 ticks / second)
+    const totalTicks = balancePhase / Math.PI;
+    const discreteTick = Math.floor(totalTicks);
+    const tickFraction = totalTicks - discreteTick;
+    // Snappy mechanical impulse (first 28% of the tick steps forward, locks for remaining 72%)
+    const impulseStep = Math.min(tickFraction / 0.28, 1.0);
+    const effectiveTick = discreteTick + impulseStep;
+
+    // Seconds Hand advances at 8 distinct beats per second (60s * 8 ticks/s = 480 ticks/rev)
+    const secondsRad = (effectiveTick / (60 * 8)) * (Math.PI * 2);
+    if (this.secHandMesh) {
+      this.secHandMesh.rotation.z = -secondsRad;
+    }
+
+    // 12-tooth escape wheel advances 1/24th revolution (15 degrees) per pallet tick
+    if (this.escapeGear) {
+      this.escapeGear.rotation.z = effectiveTick * (Math.PI * 2 / 24);
+    }
+
+    // Minutes Hand & Center Gear (1 rev per hour)
     this.gearRotations.minutes += delta * (Math.PI * 2 / 3600);
     if (this.minHandMesh) this.minHandMesh.rotation.z = -this.gearRotations.minutes;
     if (this.centerGear) this.centerGear.rotation.z = this.gearRotations.minutes;
 
-    // Hours Hand & Mainspring Barrel
+    // Hours Hand & Mainspring Barrel (1 rev per 12 hours)
     this.gearRotations.hours += delta * (Math.PI * 2 / 43200);
     if (this.hourHandMesh) this.hourHandMesh.rotation.z = -this.gearRotations.hours;
     if (this.mainspringGear) this.mainspringGear.rotation.z = -this.gearRotations.hours * 0.5;
 
-    // 3rd and 4th gear train ratios
-    if (this.thirdGear) this.thirdGear.rotation.z = this.gearRotations.seconds * 2;
-    if (this.fourthGear) this.fourthGear.rotation.z = this.gearRotations.seconds * 4;
+    // 3rd and 4th gear train ratios coupled to escapement (counter-rotational meshing)
+    if (this.thirdGear) this.thirdGear.rotation.z = -secondsRad * 2;
+    if (this.fourthGear) this.fourthGear.rotation.z = secondsRad * 4;
   }
 
   // ─────────────────────────────────────────────────────────────────────────
