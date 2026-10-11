@@ -1,6 +1,6 @@
 // Horologia - Chapter-Driven Procedural 3D Mechanical Watch
 import * as THREE from 'three';
-import { WATCH_PARTS, MATERIAL_SCHEMES } from '../utils/constants.js';
+import { WATCH_PARTS, MATERIAL_SCHEMES, CUSTOMIZER_OPTIONS } from '../utils/constants.js';
 
 // ── Chapter explosion targets ─────────────────────────────────────────────
 // Offsets from each part's assembled position. Parts not listed = stay assembled.
@@ -82,6 +82,13 @@ export class WatchModel {
     this.parts = {};
     this.materials = {};
     this.currentScheme = MATERIAL_SCHEMES[0];
+    this.currentConfig = { ...(MATERIAL_SCHEMES[0].config || {
+      casing: 'rose-gold',
+      dial: 'sunburst-blue',
+      lume: 'bgw9',
+      bezel: 'ceramic',
+      strap: 'alligator-brown'
+    }) };
     this.currentChapter = 0;
 
     // Oscillation state for gentle hero swing
@@ -1272,16 +1279,22 @@ export class WatchModel {
   }
 
   // ─────────────────────────────────────────────────────────────────────────
-  // MATERIAL SCHEME SWITCHER
+  // HAUTE HORLOGERIE ATELIER CUSTOMIZER & MATERIAL SWITCHER
   // ─────────────────────────────────────────────────────────────────────────
   applyMaterialScheme(scheme) {
     this.currentScheme = scheme;
+    if (scheme.config) {
+      this.currentConfig = { ...scheme.config };
+    }
     this.materials.case.color.setHex(scheme.caseColor);
     this.materials.case.metalness = scheme.caseMetalness ?? 0.98;
     this.materials.case.roughness = scheme.caseRoughness ?? 0.14;
     this.materials.bezel.color.setHex(scheme.bezelColor);
     this.materials.dial.color.setHex(scheme.dialColor);
     this.materials.dialFace.color.setHex(scheme.dialColor || 0x0a101d);
+    this.materials.dialFace.transparent = false;
+    this.materials.dialFace.opacity = 1.0;
+    this.materials.dialFace.visible = true;
     this.materials.strap.color.setHex(scheme.strapColor);
     this.materials.gear.color.setHex(scheme.gearColor);
     this.materials.plate.color.setHex(scheme.plateColor);
@@ -1289,5 +1302,114 @@ export class WatchModel {
     this.materials.jewel.emissive.setHex(scheme.jewelColor);
     this.materials.lume.color.setHex(scheme.lumeColor);
     this.materials.lume.emissive.setHex(scheme.lumeColor);
+  }
+
+  applyCustomOption(category, optionId) {
+    const options = CUSTOMIZER_OPTIONS[category];
+    if (!options) return;
+    const opt = options.find(o => o.id === optionId);
+    if (!opt) return;
+
+    this.currentConfig[category] = optionId;
+
+    if (category === 'casing') {
+      this.materials.case.color.setHex(opt.color);
+      this.materials.case.metalness = opt.metalness ?? 0.98;
+      this.materials.case.roughness = opt.roughness ?? 0.14;
+
+      // Update bezel if matching case
+      const currentBezelOpt = CUSTOMIZER_OPTIONS.bezel.find(b => b.id === this.currentConfig.bezel);
+      if (currentBezelOpt && currentBezelOpt.matchCase) {
+        this.materials.bezel.color.setHex(opt.color);
+        this.materials.bezel.metalness = opt.metalness ?? 0.98;
+        this.materials.bezel.roughness = 0.08;
+      }
+
+      // Update bracelet if matching case
+      const currentStrapOpt = CUSTOMIZER_OPTIONS.strap.find(s => s.id === this.currentConfig.strap);
+      if (currentStrapOpt && currentStrapOpt.matchCase) {
+        this.materials.strap.color.setHex(opt.color);
+        this.materials.strap.metalness = opt.metalness ?? 0.95;
+        this.materials.strap.roughness = 0.28;
+      }
+    } else if (category === 'dial') {
+      this.materials.dial.color.setHex(opt.color);
+      this.materials.dialFace.color.setHex(opt.color);
+      if (opt.isSkeleton) {
+        this.materials.dialFace.transparent = true;
+        this.materials.dialFace.opacity = opt.faceOpacity ?? 0.18;
+        this.materials.dialFace.visible = false;
+      } else {
+        this.materials.dialFace.transparent = false;
+        this.materials.dialFace.opacity = 1.0;
+        this.materials.dialFace.visible = true;
+      }
+    } else if (category === 'lume') {
+      this.materials.lume.color.setHex(opt.color);
+      this.materials.lume.emissive.setHex(opt.color);
+    } else if (category === 'bezel') {
+      if (opt.matchCase) {
+        const caseOpt = CUSTOMIZER_OPTIONS.casing.find(c => c.id === this.currentConfig.casing) || CUSTOMIZER_OPTIONS.casing[0];
+        this.materials.bezel.color.setHex(caseOpt.color);
+        this.materials.bezel.metalness = caseOpt.metalness ?? 0.98;
+        this.materials.bezel.roughness = 0.08;
+      } else {
+        this.materials.bezel.color.setHex(opt.color);
+        this.materials.bezel.metalness = opt.metalness ?? 0.40;
+        this.materials.bezel.roughness = opt.roughness ?? 0.06;
+      }
+    } else if (category === 'strap') {
+      if (opt.matchCase) {
+        const caseOpt = CUSTOMIZER_OPTIONS.casing.find(c => c.id === this.currentConfig.casing) || CUSTOMIZER_OPTIONS.casing[0];
+        this.materials.strap.color.setHex(caseOpt.color);
+        this.materials.strap.metalness = caseOpt.metalness ?? 0.95;
+        this.materials.strap.roughness = 0.28;
+      } else {
+        this.materials.strap.color.setHex(opt.color);
+        this.materials.strap.metalness = opt.metalness ?? 0.08;
+        this.materials.strap.roughness = opt.roughness ?? 0.72;
+      }
+    }
+  }
+
+  applyCustomConfig(config) {
+    if (!config) return;
+    Object.entries(config).forEach(([cat, val]) => {
+      this.applyCustomOption(cat, val);
+    });
+  }
+
+  getWatchSpecifications() {
+    const casing = CUSTOMIZER_OPTIONS.casing.find(c => c.id === this.currentConfig.casing) || CUSTOMIZER_OPTIONS.casing[0];
+    const dial = CUSTOMIZER_OPTIONS.dial.find(d => d.id === this.currentConfig.dial) || CUSTOMIZER_OPTIONS.dial[0];
+    const lume = CUSTOMIZER_OPTIONS.lume.find(l => l.id === this.currentConfig.lume) || CUSTOMIZER_OPTIONS.lume[0];
+    const bezel = CUSTOMIZER_OPTIONS.bezel.find(b => b.id === this.currentConfig.bezel) || CUSTOMIZER_OPTIONS.bezel[0];
+    const strap = CUSTOMIZER_OPTIONS.strap.find(s => s.id === this.currentConfig.strap) || CUSTOMIZER_OPTIONS.strap[0];
+
+    return {
+      referenceNumber: `REF. H-${casing.id.substring(0, 3).toUpperCase()}-${dial.id.substring(0, 3).toUpperCase()}-41`,
+      manufacture: 'Horologia Manufacture Genevoise',
+      calibre: 'Calibre H-01 In-House Automatic',
+      dimensions: '41.0 mm Diameter · 11.4 mm Height · 20.0 mm Lug Width',
+      casing: casing.name,
+      casingSpecs: casing.specs,
+      dial: dial.name,
+      dialSpecs: dial.specs,
+      lume: lume.name,
+      lumeSpecs: lume.specs,
+      bezel: bezel.name,
+      bezelSpecs: bezel.specs,
+      strap: strap.name,
+      strapSpecs: strap.specs,
+      movementSpecs: {
+        frequency: '28,800 VPH (4.0 Hz / 8 Beats per Second)',
+        jewels: '27 Single-Crystal Synthetic Rubies in 18k Chatons',
+        powerReserve: '72 Hours (Nivaflex Alloy Barrel)',
+        escapement: 'Swiss Lever Escapement with Glucydur Variable Inertia Balance',
+        hairspring: 'Nivarox Breguet Terminal Curve Overcoil',
+        shockAbsorber: 'Dual Incabloc Spring Shock System',
+        finishing: 'Anglage Hand-Chamfered Edges, Côtes de Genève, Circular Perlage, 290°C Heat-Blued Screws'
+      }
+    };
   }
 }

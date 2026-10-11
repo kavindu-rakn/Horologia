@@ -25,7 +25,8 @@ export class SceneManager {
     this.renderer = new THREE.WebGLRenderer({
       antialias: true,
       alpha: false,
-      powerPreference: 'high-performance'
+      powerPreference: 'high-performance',
+      preserveDrawingBuffer: true
     });
     this.renderer.setSize(this.width, this.height);
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -222,6 +223,49 @@ export class SceneManager {
 
   render() {
     this.renderer.render(this.scene, this.camera);
+  }
+
+  captureThumbnail(maxWidth = 480, maxHeight = 360) {
+    this.render();
+    try {
+      const srcCanvas = this.renderer.domElement;
+      // Downscale to an offscreen canvas for optimal storage size
+      const offscreen = document.createElement('canvas');
+      const aspect = srcCanvas.width / srcCanvas.height;
+      let targetW = maxWidth;
+      let targetH = Math.round(targetW / aspect);
+      if (targetH > maxHeight) {
+        targetH = maxHeight;
+        targetW = Math.round(targetH * aspect);
+      }
+      offscreen.width = targetW;
+      offscreen.height = targetH;
+      const ctx = offscreen.getContext('2d');
+      ctx.drawImage(srcCanvas, 0, 0, targetW, targetH);
+      return offscreen.toDataURL('image/webp', 0.85);
+    } catch (e) {
+      try {
+        return this.renderer.domElement.toDataURL('image/png');
+      } catch (err) {
+        console.warn('Canvas snapshot capture failed:', err);
+        return null;
+      }
+    }
+  }
+
+  downloadSnapshot(filename = 'horologia-bespoke-timepiece.png') {
+    this.render();
+    try {
+      const dataUrl = this.renderer.domElement.toDataURL('image/png');
+      const a = document.createElement('a');
+      a.href = dataUrl;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    } catch (e) {
+      console.error('Failed to download snapshot:', e);
+    }
   }
 
   onResize() {

@@ -90,17 +90,43 @@
   <div id="scroll-proxy"></div>
 
   <!-- ═══════════════════════════════════════════
-       MATERIAL LAB DRAWER
+       ATELIER STUDIO DRAWER (CUSTOMIZER)
   ═══════════════════════════════════════════ -->
-  <aside id="material-lab" aria-label="Material Lab">
+  <aside id="material-lab" aria-label="Atelier Studio">
     <div class="drawer-header">
-      <h3>Material Lab</h3>
-      <button id="btn-close-lab" class="icon-btn">✕</button>
+      <div class="drawer-title-group">
+        <span class="drawer-eyebrow">Haute Horlogerie</span>
+        <h3>Atelier Studio</h3>
+      </div>
+      <button id="btn-close-lab" class="icon-btn" aria-label="Close Atelier Studio">✕</button>
     </div>
-    <p class="drawer-subtitle">Select a material finish for your timepiece</p>
-    <div id="preset-container"></div>
+
+    <!-- Atelier Tab Navigation -->
+    <div class="atelier-tabs" role="tablist">
+      <button id="tab-presets" class="atelier-tab active" role="tab" aria-selected="true">Curated Editions</button>
+      <button id="tab-bespoke" class="atelier-tab" role="tab" aria-selected="false">Bespoke Parts</button>
+    </div>
+
+    <!-- View 1: Curated Editions Presets -->
+    <div id="presets-view" class="atelier-view active">
+      <p class="drawer-subtitle">Select a master caliber finish calibrated by our horology artisans</p>
+      <div id="preset-container"></div>
+    </div>
+
+    <!-- View 2: Granular Bespoke Customizer -->
+    <div id="bespoke-view" class="atelier-view">
+      <p class="drawer-subtitle">Configure each component individually down to the metallurgy and lume</p>
+      <div id="bespoke-customizer-container">
+        <!-- Injected via JavaScript -->
+      </div>
+    </div>
+
     <div class="drawer-footer">
-      <button id="btn-open-save-modal" class="btn-primary">Save to Showcase ✦</button>
+      <div class="drawer-action-row">
+        <button id="btn-snapshot" class="btn-action" title="Capture high-resolution snapshot">📸 Snapshot</button>
+        <button id="btn-view-specs" class="btn-action" title="View Certificate of Manufacture">📜 Certificate</button>
+      </div>
+      <button id="btn-open-save-modal" class="btn-primary btn-block">Publish to Showcase ✦</button>
     </div>
   </aside>
 
@@ -110,30 +136,76 @@
   <div id="save-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="save-modal-title">
     <div class="modal-box">
       <div class="modal-header">
-        <h3 id="save-modal-title">Save Your Watch Design</h3>
-        <button id="btn-close-save" class="icon-btn">✕</button>
+        <div>
+          <span class="modal-eyebrow">Manufacture Archive</span>
+          <h3 id="save-modal-title">Publish Your Timepiece</h3>
+        </div>
+        <button id="btn-close-save" class="icon-btn" aria-label="Close dialog">✕</button>
       </div>
+
+      <div class="save-preview-card">
+        <img id="save-preview-thumb" class="save-preview-img" alt="Watch preview thumbnail" />
+        <div class="save-preview-info">
+          <div id="save-ref-number" class="ref-badge">REF. H-BESPOKE-41</div>
+          <div id="save-spec-summary" class="preview-subtext">Calibre H-01 In-House Movement</div>
+        </div>
+      </div>
+
       <form id="save-design-form">
-        <label for="watch-title">Watch Title</label>
-        <input type="text" id="watch-title" placeholder="My Rose Gold Edition" required>
-        <label for="creator-name">Your Name</label>
-        <input type="text" id="creator-name" placeholder="Anonymous Watchmaker" required>
-        <label for="design-desc">Description</label>
-        <textarea id="design-desc" rows="3" placeholder="Describe your vision..."></textarea>
-        <button type="submit" class="btn-primary">Publish to Gallery ✦</button>
+        <div>
+          <label for="watch-title">Timepiece Model Title</label>
+          <input type="text" id="watch-title" placeholder="e.g. Royal Tourbillon Chrono" required maxlength="48">
+        </div>
+        <div>
+          <label for="creator-name">Master Watchmaker Name</label>
+          <input type="text" id="creator-name" placeholder="e.g. Jean-Marc Horologist" required maxlength="36">
+        </div>
+        <div>
+          <label for="design-desc">Artisan Conception Notes</label>
+          <textarea id="design-desc" rows="3" placeholder="Describe the horological inspiration, finish choices, and mechanical character..." maxlength="240"></textarea>
+        </div>
+        <button type="submit" class="btn-primary">Publish to Global Showcase ✦</button>
       </form>
     </div>
   </div>
 
   <!-- ═══════════════════════════════════════════
-       SHOWCASE GALLERY MODAL
+       ARTISAN SPECIFICATION CERTIFICATE MODAL
+  ═══════════════════════════════════════════ -->
+  <div id="spec-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="spec-modal-title">
+    <div class="modal-box modal-wide certificate-box">
+      <div class="modal-header">
+        <div>
+          <span class="modal-eyebrow">Haute Horlogerie Genevoise</span>
+          <h3 id="spec-modal-title">Certificate of Manufacture</h3>
+        </div>
+        <button id="btn-close-spec" class="icon-btn" aria-label="Close certificate">✕</button>
+      </div>
+
+      <div id="certificate-body" class="certificate-content">
+        <!-- Dynamically populated via getWatchSpecifications() -->
+      </div>
+
+      <div class="certificate-footer">
+        <button id="btn-print-certificate" class="btn-secondary">🖨 Print Certificate</button>
+        <button id="btn-spec-share" class="btn-primary">↗ Share Timepiece</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       COMMUNITY SHOWCASE GALLERY MODAL
   ═══════════════════════════════════════════ -->
   <div id="showcase-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="showcase-modal-title">
-    <div class="modal-box modal-wide">
+    <div class="modal-box modal-extra-wide">
       <div class="modal-header">
-        <h3 id="showcase-modal-title">Community Showcase</h3>
-        <button id="btn-close-showcase" class="icon-btn">✕</button>
+        <div>
+          <span class="modal-eyebrow">Global Collector Registry</span>
+          <h3 id="showcase-modal-title">Community Showcase & Atelier Archive</h3>
+        </div>
+        <button id="btn-close-showcase" class="icon-btn" aria-label="Close showcase">✕</button>
       </div>
+      <p class="showcase-description">Explore bespoke timepieces designed by collectors worldwide. Fork any configuration into your Atelier to customize and make it your own.</p>
       <div id="gallery-container"></div>
     </div>
   </div>

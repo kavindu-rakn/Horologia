@@ -86,9 +86,11 @@ export class DesignStorageManager {
    * @returns {Object} Saved design with generated ID and metadata
    */
   async saveDesign(designData) {
+    const refCode = 'REF. H-' + (designData.config?.casing || 'BESPOKE').substring(0, 3).toUpperCase() + '-' + Date.now().toString(36).toUpperCase().slice(-4);
     const newDesign = {
       ...designData,
       id: 'horologia-' + Date.now().toString(36) + '-' + Math.random().toString(36).substring(2, 6),
+      refNumber: designData.refNumber || refCode,
       likes: 1,
       createdAt: new Date().toISOString(),
       timestamp: 'Just now'
@@ -99,6 +101,29 @@ export class DesignStorageManager {
     this.persistDesigns();
 
     return newDesign;
+  }
+
+  /**
+   * Forks an existing community design into an editable draft configuration.
+   * @param {string} designId
+   * @returns {Object|null}
+   */
+  forkDesign(designId) {
+    const original = this.memoryDesigns.find(d => d.id === designId);
+    if (!original) return null;
+
+    return {
+      title: `${original.title} (Artisan Fork)`,
+      creator: '',
+      description: `Bespoke variation created from "${original.title}" by ${original.creator || 'Master Watchmaker'}.`,
+      schemeId: original.schemeId,
+      config: original.config ? { ...original.config } : null,
+      forkedFrom: {
+        id: original.id,
+        title: original.title,
+        creator: original.creator
+      }
+    };
   }
 
   /**
@@ -143,7 +168,12 @@ export class DesignStorageManager {
       if (config.schemeId) {
         url.searchParams.set('scheme', config.schemeId);
       }
-      const serialized = utf8ToBase64(JSON.stringify(config));
+      const payload = {
+        schemeId: config.schemeId,
+        config: config.config,
+        title: config.title
+      };
+      const serialized = utf8ToBase64(JSON.stringify(payload));
       url.searchParams.set('build', serialized);
       return url.toString();
     } catch (e) {

@@ -5,7 +5,7 @@ import { RaycasterManager } from './components/RaycasterManager.js';
 import { soundEngine } from './audio/SoundEngine.js';
 import { DesignStorageManager } from './core/DesignStorageManager.js';
 import { appStore } from './core/Store.js';
-import { MATERIAL_SCHEMES } from './utils/constants.js';
+import { MATERIAL_SCHEMES, CUSTOMIZER_OPTIONS } from './utils/constants.js';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import Lenis from 'lenis';
@@ -115,9 +115,13 @@ class HorologiaApp {
 
     // Check URL parameters for custom shared design via DesignStorageManager
     const initialConfig = this.storageManager.decodeShareableURL();
-    if (initialConfig && initialConfig.schemeId) {
-      const match = MATERIAL_SCHEMES.find(s => s.id === initialConfig.schemeId);
-      if (match) this.watchModel.applyMaterialScheme(match);
+    if (initialConfig) {
+      if (initialConfig.config) {
+        this.watchModel.applyCustomConfig(initialConfig.config);
+      } else if (initialConfig.schemeId) {
+        const match = MATERIAL_SCHEMES.find(s => s.id === initialConfig.schemeId);
+        if (match) this.watchModel.applyMaterialScheme(match);
+      }
     }
 
     this.currentChapter = 0;
@@ -135,6 +139,7 @@ class HorologiaApp {
     this.initUI();
     this.initDragRotate();   // ← drag-to-inspect any angle
     this.initMaterialLab();
+    this.initSpecificationModal();
     this.initShowcaseGallery();
     this.initShareButton();
 
@@ -363,28 +368,63 @@ class HorologiaApp {
     window.addEventListener('click', () => soundEngine.init(), { once: true });
   }
 
-  // ── Material Lab ─────────────────────────────────────────────────────────
+  // ── Atelier Studio (Customizer Suite) ─────────────────────────────────────
   initMaterialLab() {
     const labDrawer = document.getElementById('material-lab');
     const btnCustomizer = document.getElementById('btn-customizer');
     const btnCloseLab = document.getElementById('btn-close-lab');
     const presetContainer = document.getElementById('preset-container');
 
+    const tabPresets = document.getElementById('tab-presets');
+    const tabBespoke = document.getElementById('tab-bespoke');
+    const presetsView = document.getElementById('presets-view');
+    const bespokeView = document.getElementById('bespoke-view');
+
+    // Tab Navigation
+    tabPresets.addEventListener('click', () => {
+      tabPresets.classList.add('active');
+      tabPresets.setAttribute('aria-selected', 'true');
+      tabBespoke.classList.remove('active');
+      tabBespoke.setAttribute('aria-selected', 'false');
+      presetsView.classList.add('active');
+      bespokeView.classList.remove('active');
+      soundEngine.playRatchetTick(0.2);
+    });
+
+    tabBespoke.addEventListener('click', () => {
+      tabBespoke.classList.add('active');
+      tabBespoke.setAttribute('aria-selected', 'true');
+      tabPresets.classList.remove('active');
+      tabPresets.setAttribute('aria-selected', 'false');
+      bespokeView.classList.add('active');
+      presetsView.classList.remove('active');
+      soundEngine.playRatchetTick(0.2);
+    });
+
     btnCustomizer.addEventListener('click', () => {
       const isOpen = labDrawer.classList.toggle('open');
       btnCustomizer.classList.toggle('active');
       appStore.setState({ activeModal: isOpen ? 'materialLab' : null });
+      if (isOpen) {
+        soundEngine.playRatchetTick(0.3);
+        this.renderBespokeCustomizer();
+      }
     });
+
     btnCloseLab.addEventListener('click', () => {
       labDrawer.classList.remove('open');
       btnCustomizer.classList.remove('active');
       appStore.setState({ activeModal: null });
     });
 
+    // 1. Render Curated Presets
     presetContainer.innerHTML = MATERIAL_SCHEMES.map(s => `
       <div class="preset-card ${s.id === this.watchModel.currentScheme.id ? 'active' : ''}" data-scheme-id="${s.id}">
         <div class="preset-color-swatch" style="background: linear-gradient(135deg, #${s.caseColor.toString(16).padStart(6, '0')} 50%, #${s.secondaryColor.toString(16).padStart(6, '0')} 50%)"></div>
-        <div class="preset-info"><h4>${s.name}</h4><p>${s.tagline}</p></div>
+        <div class="preset-info">
+          <h4>${s.name}</h4>
+          <p>${s.tagline}</p>
+        </div>
       </div>
     `).join('');
 
@@ -398,15 +438,55 @@ class HorologiaApp {
         soundEngine.playRatchetWinding();
         document.querySelectorAll('.preset-card').forEach(c => c.classList.remove('active'));
         card.classList.add('active');
+        this.renderBespokeCustomizer();
       }
     });
 
+    // 2. Render Bespoke Customizer
+    this.renderBespokeCustomizer();
+
+    // 3. Quick Snapshot Action
+    const btnSnapshot = document.getElementById('btn-snapshot');
+    if (btnSnapshot) {
+      btnSnapshot.addEventListener('click', () => {
+        soundEngine.playRatchetWinding();
+        const casingOpt = this.watchModel.currentConfig.casing || 'custom';
+        this.sceneManager.downloadSnapshot(`horologia-${casingOpt}-chronometer.png`);
+      });
+    }
+
+    // 4. View Certificate of Manufacture
+    const btnViewSpecs = document.getElementById('btn-view-specs');
+    if (btnViewSpecs) {
+      btnViewSpecs.addEventListener('click', () => {
+        soundEngine.playRatchetTick(0.3);
+        this.openSpecificationModal();
+      });
+    }
+
+    // 5. Save Design Modal Flow
     const btnOpenSave = document.getElementById('btn-open-save-modal');
     const saveModal = document.getElementById('save-modal');
     const btnCloseSave = document.getElementById('btn-close-save');
     const saveForm = document.getElementById('save-design-form');
+    const savePreviewThumb = document.getElementById('save-preview-thumb');
+    const saveRefNumber = document.getElementById('save-ref-number');
+    const saveSpecSummary = document.getElementById('save-spec-summary');
 
-    btnOpenSave.addEventListener('click', () => saveModal.classList.add('open'));
+    btnOpenSave.addEventListener('click', () => {
+      soundEngine.playRatchetTick(0.3);
+      // Capture live WebGL canvas thumbnail
+      const thumbnailDataUrl = this.sceneManager.captureThumbnail(320, 240);
+      if (savePreviewThumb && thumbnailDataUrl) {
+        savePreviewThumb.src = thumbnailDataUrl;
+      }
+      const specs = this.watchModel.getWatchSpecifications();
+      if (saveRefNumber) saveRefNumber.textContent = specs.referenceNumber;
+      if (saveSpecSummary) saveSpecSummary.textContent = `${specs.casing} · ${specs.dial}`;
+
+      saveModal.classList.add('open');
+    });
+
     btnCloseSave.addEventListener('click', () => saveModal.classList.remove('open'));
 
     saveForm.addEventListener('submit', async (e) => {
@@ -414,19 +494,188 @@ class HorologiaApp {
       const title = document.getElementById('watch-title').value;
       const creator = document.getElementById('creator-name').value;
       const desc = document.getElementById('design-desc').value;
-      await this.storageManager.saveDesign({ title, creator, description: desc, schemeId: this.watchModel.currentScheme.id });
+      const specs = this.watchModel.getWatchSpecifications();
+      const thumbnailDataUrl = this.sceneManager.captureThumbnail(320, 240);
+
+      await this.storageManager.saveDesign({
+        title,
+        creator,
+        description: desc,
+        schemeId: this.watchModel.currentScheme.id,
+        config: { ...this.watchModel.currentConfig },
+        refNumber: specs.referenceNumber,
+        thumbnail: thumbnailDataUrl,
+        specs
+      });
+
       saveModal.classList.remove('open');
       saveForm.reset();
-      // Saved — subtle luxury notification
+      soundEngine.playRatchetWinding();
+
+      // Subtle luxury notification glow
       const card = document.getElementById('chapter-card');
       if (card) {
-        card.style.boxShadow = '0 0 40px rgba(201, 164, 74, 0.6)';
-        setTimeout(() => { card.style.boxShadow = ''; }, 1200);
+        card.style.boxShadow = '0 0 50px rgba(201, 164, 74, 0.7)';
+        setTimeout(() => { card.style.boxShadow = ''; }, 1400);
       }
     });
   }
 
-  // ── Showcase Gallery ─────────────────────────────────────────────────────
+  // ── Render Granular Bespoke Customizer ────────────────────────────────────
+  renderBespokeCustomizer() {
+    const bespokeContainer = document.getElementById('bespoke-customizer-container');
+    if (!bespokeContainer) return;
+
+    const categories = [
+      { key: 'casing', title: '1. Casing & Lugs Metallurgy' },
+      { key: 'dial', title: '2. Dial Architecture & Finish' },
+      { key: 'lume', title: '3. Hands & Super-LumiNova' },
+      { key: 'bezel', title: '4. Bezel Ring Finish' },
+      { key: 'strap', title: '5. Strap & Clasp Style' }
+    ];
+
+    const currentCfg = this.watchModel.currentConfig;
+    const caseColorHex = (CUSTOMIZER_OPTIONS.casing.find(c => c.id === currentCfg.casing)?.color || 0xdf9a68).toString(16).padStart(6, '0');
+
+    bespokeContainer.innerHTML = categories.map(cat => {
+      const options = CUSTOMIZER_OPTIONS[cat.key] || [];
+      return `
+        <div class="bespoke-category" data-cat="${cat.key}">
+          <div class="bespoke-cat-title">${cat.title}</div>
+          <div class="bespoke-grid">
+            ${options.map(opt => {
+              const isActive = (currentCfg[cat.key] === opt.id);
+              let swatchStyle = '';
+              if (opt.matchCase) {
+                swatchStyle = `background: #${caseColorHex};`;
+              } else if (opt.color !== undefined) {
+                swatchStyle = `background: #${opt.color.toString(16).padStart(6, '0')};`;
+              } else {
+                swatchStyle = 'background: #2a3447;';
+              }
+
+              return `
+                <div class="bespoke-card ${isActive ? 'active' : ''}" data-cat="${cat.key}" data-opt-id="${opt.id}">
+                  <div class="bespoke-swatch" style="${swatchStyle}"></div>
+                  <div class="bespoke-info">
+                    <h5>${opt.name}</h5>
+                    <p>${opt.subtitle || ''}</p>
+                  </div>
+                  ${opt.specs ? `<span class="bespoke-badge">${opt.specs.split('|')[0].trim()}</span>` : ''}
+                </div>
+              `;
+            }).join('')}
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    // Click handler for bespoke options
+    bespokeContainer.querySelectorAll('.bespoke-card').forEach(card => {
+      card.addEventListener('click', () => {
+        const cat = card.dataset.cat;
+        const optId = card.dataset.optId;
+        this.watchModel.applyCustomOption(cat, optId);
+        soundEngine.playRatchetTick(0.28);
+        this.renderBespokeCustomizer();
+      });
+    });
+  }
+
+  // ── Haute Horlogerie Certificate / Specification Sheet Modal ─────────────
+  initSpecificationModal() {
+    const specModal = document.getElementById('spec-modal');
+    const btnCloseSpec = document.getElementById('btn-close-spec');
+    const btnPrint = document.getElementById('btn-print-certificate');
+    const btnShare = document.getElementById('btn-spec-share');
+
+    if (btnCloseSpec) {
+      btnCloseSpec.addEventListener('click', () => specModal.classList.remove('open'));
+    }
+
+    if (btnPrint) {
+      btnPrint.addEventListener('click', () => {
+        soundEngine.playRatchetWinding();
+        window.print();
+      });
+    }
+
+    if (btnShare) {
+      btnShare.addEventListener('click', () => {
+        const shareUrl = this.storageManager.encodeShareableURL({
+          schemeId: this.watchModel.currentScheme.id,
+          config: this.watchModel.currentConfig
+        });
+        navigator.clipboard?.writeText(shareUrl).then(() => {
+          btnShare.textContent = '✓ Link Copied!';
+          soundEngine.playRatchetWinding();
+          setTimeout(() => { btnShare.textContent = '↗ Share Timepiece'; }, 2000);
+        });
+      });
+    }
+  }
+
+  openSpecificationModal(customSpecs = null) {
+    const specModal = document.getElementById('spec-modal');
+    const certBody = document.getElementById('certificate-body');
+    if (!specModal || !certBody) return;
+
+    const specs = customSpecs || this.watchModel.getWatchSpecifications();
+
+    certBody.innerHTML = `
+      <div class="cert-header">
+        <div class="cert-ref">${escapeHTML(specs.referenceNumber)}</div>
+        <div class="cert-model">${escapeHTML(specs.calibre)} · ${escapeHTML(specs.manufacture)}</div>
+      </div>
+      <div class="cert-grid">
+        <div>
+          <div class="cert-item-title">Chassis & Lugs</div>
+          <div class="cert-item-val">${escapeHTML(specs.casing)}</div>
+          <div class="cert-item-sub">${escapeHTML(specs.casingSpecs || '')}</div>
+        </div>
+        <div>
+          <div class="cert-item-title">Dimensions</div>
+          <div class="cert-item-val">${escapeHTML(specs.dimensions)}</div>
+          <div class="cert-item-sub">Double-Domed Sapphire Crystal (IOR 1.77)</div>
+        </div>
+        <div>
+          <div class="cert-item-title">Dial Architecture</div>
+          <div class="cert-item-val">${escapeHTML(specs.dial)}</div>
+          <div class="cert-item-sub">${escapeHTML(specs.dialSpecs || '')}</div>
+        </div>
+        <div>
+          <div class="cert-item-title">Bezel Ring</div>
+          <div class="cert-item-val">${escapeHTML(specs.bezel)}</div>
+          <div class="cert-item-sub">${escapeHTML(specs.bezelSpecs || '')}</div>
+        </div>
+        <div>
+          <div class="cert-item-title">Luminescence</div>
+          <div class="cert-item-val">${escapeHTML(specs.lume)}</div>
+          <div class="cert-item-sub">${escapeHTML(specs.lumeSpecs || '')}</div>
+        </div>
+        <div>
+          <div class="cert-item-title">Strap & Clasp</div>
+          <div class="cert-item-val">${escapeHTML(specs.strap)}</div>
+          <div class="cert-item-sub">${escapeHTML(specs.strapSpecs || '')}</div>
+        </div>
+      </div>
+      <div class="cert-movement-block">
+        <div class="cert-movement-title">Manufacture Movement Specifications</div>
+        <div class="cert-movement-list">
+          • <strong>Regulator:</strong> ${escapeHTML(specs.movementSpecs.escapement)}<br>
+          • <strong>Oscillator:</strong> ${escapeHTML(specs.movementSpecs.frequency)} (${escapeHTML(specs.movementSpecs.hairspring)})<br>
+          • <strong>Jeweling:</strong> ${escapeHTML(specs.movementSpecs.jewels)}<br>
+          • <strong>Power Reserve:</strong> ${escapeHTML(specs.movementSpecs.powerReserve)}<br>
+          • <strong>Shock Protection:</strong> ${escapeHTML(specs.movementSpecs.shockAbsorber)}<br>
+          • <strong>Haute Finishes:</strong> ${escapeHTML(specs.movementSpecs.finishing)}
+        </div>
+      </div>
+    `;
+
+    specModal.classList.add('open');
+  }
+
+  // ── Community Showcase Gallery ───────────────────────────────────────────
   initShowcaseGallery() {
     const showcaseModal = document.getElementById('showcase-modal');
     const btnShowcase = document.getElementById('btn-showcase');
@@ -434,6 +683,7 @@ class HorologiaApp {
     const galleryContainer = document.getElementById('gallery-container');
 
     btnShowcase.addEventListener('click', async () => {
+      soundEngine.playRatchetTick(0.3);
       showcaseModal.classList.add('open');
       await this.renderShowcaseCards(galleryContainer);
     });
@@ -443,33 +693,106 @@ class HorologiaApp {
   async renderShowcaseCards(container) {
     container.innerHTML = `<p style="color: var(--text-muted); grid-column: 1/-1;">Loading community watches...</p>`;
     const designs = await this.storageManager.fetchCommunityDesigns();
-    container.innerHTML = designs.map(d => `
-      <div class="gallery-card">
-        <h4>${escapeHTML(d.title)}</h4>
-        <p style="font-size: 0.7rem; color: var(--accent-gold); margin-bottom: 6px;">By ${escapeHTML(d.creator)} · ${escapeHTML(d.timestamp || 'Recently')}</p>
-        <p>${escapeHTML(d.description || 'A bespoke Horologia movement finish.')}</p>
-        <div class="card-footer">
-          <button class="like-btn" data-id="${escapeHTML(d.id)}">❤ ${d.likes || 1}</button>
-          <button class="load-btn" data-scheme-id="${escapeHTML(d.schemeId)}">Load Design</button>
-          <button class="export-btn" data-id="${escapeHTML(d.id)}" title="Export specification JSON">⤓ JSON</button>
-        </div>
-      </div>
-    `).join('');
 
-    container.querySelectorAll('.load-btn').forEach(btn => {
+    container.innerHTML = designs.map(d => {
+      const casingName = CUSTOMIZER_OPTIONS.casing.find(c => c.id === d.config?.casing)?.name || 'Noble Alloy';
+      const dialName = CUSTOMIZER_OPTIONS.dial.find(dial => dial.id === d.config?.dial)?.name || 'Artisan Dial';
+      const lumeName = CUSTOMIZER_OPTIONS.lume.find(l => l.id === d.config?.lume)?.name || 'Lume';
+
+      return `
+        <div class="gallery-card">
+          <div class="gallery-thumb-container">
+            ${d.thumbnail ? `
+              <img class="gallery-thumb-img" src="${d.thumbnail}" alt="${escapeHTML(d.title)}" />
+            ` : `
+              <div style="font-size: 2.2rem; filter: drop-shadow(0 0 12px rgba(201,164,74,0.4));">⌚</div>
+            `}
+          </div>
+          <div class="card-header-row">
+            <h4>${escapeHTML(d.title)}</h4>
+            <span class="ref-badge" style="font-size: 0.62rem;">${escapeHTML(d.refNumber || 'REF. H-BESPOKE')}</span>
+          </div>
+          <p class="card-creator">By ${escapeHTML(d.creator || 'Anonymous Artisan')} · ${escapeHTML(d.timestamp || 'Recently')}</p>
+          <p class="card-desc">${escapeHTML(d.description || 'A bespoke Horologia caliber finish.')}</p>
+          <div class="card-tags">
+            <span class="tag-pill">${escapeHTML(casingName.split(' ')[0])}</span>
+            <span class="tag-pill">${escapeHTML(dialName.split(' ')[0])}</span>
+            <span class="tag-pill">${escapeHTML(lumeName.replace('Super-LumiNova ', ''))}</span>
+          </div>
+          <div class="card-footer-actions">
+            <button class="fork-btn" data-id="${escapeHTML(d.id)}" title="Fork this design into Atelier">✦ Fork Build</button>
+            <button class="specs-btn" data-id="${escapeHTML(d.id)}" title="Certificate & Specs">📜</button>
+            <button class="like-btn" data-id="${escapeHTML(d.id)}">❤ ${d.likes || 1}</button>
+            <button class="export-btn" data-id="${escapeHTML(d.id)}" title="Export JSON">⤓</button>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    // Fork Build Action
+    container.querySelectorAll('.fork-btn').forEach(btn => {
       btn.addEventListener('click', () => {
-        const scheme = MATERIAL_SCHEMES.find(s => s.id === btn.dataset.schemeId) || MATERIAL_SCHEMES[0];
-        this.watchModel.applyMaterialScheme(scheme);
-        soundEngine.playRatchetWinding();
-        document.getElementById('showcase-modal').classList.remove('open');
+        const forkDraft = this.storageManager.forkDesign(btn.dataset.id);
+        if (forkDraft) {
+          if (forkDraft.config) {
+            this.watchModel.applyCustomConfig(forkDraft.config);
+          } else if (forkDraft.schemeId) {
+            const scheme = MATERIAL_SCHEMES.find(s => s.id === forkDraft.schemeId) || MATERIAL_SCHEMES[0];
+            this.watchModel.applyMaterialScheme(scheme);
+          }
+
+          // Pre-fill save form
+          const titleInput = document.getElementById('watch-title');
+          const descInput = document.getElementById('design-desc');
+          if (titleInput) titleInput.value = forkDraft.title;
+          if (descInput) descInput.value = forkDraft.description;
+
+          // Open Atelier Studio drawer
+          const labDrawer = document.getElementById('material-lab');
+          const btnCustomizer = document.getElementById('btn-customizer');
+          if (labDrawer) labDrawer.classList.add('open');
+          if (btnCustomizer) btnCustomizer.classList.add('active');
+          document.getElementById('showcase-modal').classList.remove('open');
+
+          this.renderBespokeCustomizer();
+          soundEngine.playRatchetWinding();
+
+          // Visual confirmation
+          const card = document.getElementById('chapter-card');
+          if (card) {
+            card.style.boxShadow = '0 0 50px rgba(201, 164, 74, 0.7)';
+            setTimeout(() => { card.style.boxShadow = ''; }, 1400);
+          }
+        }
       });
     });
+
+    // View Specs Action
+    container.querySelectorAll('.specs-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const d = designs.find(item => item.id === btn.dataset.id);
+        if (d) {
+          if (d.specs) {
+            this.openSpecificationModal(d.specs);
+          } else if (d.config) {
+            this.watchModel.applyCustomConfig(d.config);
+            this.openSpecificationModal();
+          }
+          soundEngine.playRatchetTick(0.3);
+        }
+      });
+    });
+
+    // Like Action
     container.querySelectorAll('.like-btn').forEach(btn => {
       btn.addEventListener('click', async () => {
         await this.storageManager.likeDesign(btn.dataset.id);
+        soundEngine.playRatchetTick(0.2);
         await this.renderShowcaseCards(container);
       });
     });
+
+    // Export JSON Action
     container.querySelectorAll('.export-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         const d = designs.find(item => item.id === btn.dataset.id);
@@ -491,7 +814,9 @@ class HorologiaApp {
 
     btnShare.addEventListener('click', () => {
       const shareUrl = this.storageManager.encodeShareableURL({
-        schemeId: this.watchModel.currentScheme.id
+        schemeId: this.watchModel.currentScheme.id,
+        config: this.watchModel.currentConfig,
+        title: 'Bespoke Horologia Chronometer'
       });
 
       const handleSuccess = () => {
