@@ -66,6 +66,19 @@ export const WATCH_PARTS = {
     finishingTechnique: 'Perlage on dial base, galvanic sunburst bath coating, and diamond-polished faceted hour markers.',
     focusCamera: { camera: { x: 0.0, y: 0.1, z: 3.2 }, lookAt: { x: 0, y: 0.0, z: 0.15 } }
   },
+  DIAL_FACE: {
+    id: 'dialFace',
+    name: 'Solid Sunburst Dial Face',
+    category: 'Face & Display',
+    material: 'Lacquered Brass & Galvanic Coating',
+    hardness: '160 HV Brass Alloy',
+    function: 'Acoustic dampener and optical shield providing high-legibility contrast against Dauphine hands while featuring an integrated running sub-seconds register.',
+    specs: 'Finish: Guilloché Sunburst | Sub-Seconds Track: 6 o\'clock Recessed Register',
+    metallurgy: 'Horological brass (CuZn39Pb2) chosen for optimal surface flatness and galvanic adhesion.',
+    physicsPrinciple: 'Specular radial reflection directing diffuse ambient photons into deep sunburst iridescent sheen.',
+    finishingTechnique: 'Radial brush soleil (sunburst), galvanic metallic tint immersion, multi-layer high-gloss clear protective lacquer, and diamond-polished manufacture cartouche.',
+    focusCamera: { camera: { x: 0.0, y: 0.05, z: 2.9 }, lookAt: { x: 0, y: -0.05, z: 0.16 } }
+  },
   HANDS: {
     id: 'hands',
     name: 'Faceted Dauphine Hands Assembly',

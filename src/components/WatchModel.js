@@ -1100,15 +1100,7 @@ export class WatchModel {
     plaque.position.set(0, 0.45, 0.152);
     dialFaceGroup.add(plaque);
 
-    const dialFaceMeta = {
-      name: 'Solid Sunburst Dial Face',
-      category: 'Exterior',
-      function: 'Haute Horlogerie sunburst dial face concealing the internal movement and providing high-legibility time indication.',
-      material: 'Lacquered Brass / Applied Gold',
-      specs: 'Sunburst Finish · Sub-Seconds Register · Diamond-Polished Plaque'
-    };
-
-    this.registerPart('dialFace', dialFaceGroup, dialFaceMeta);
+    this.registerPart('dialFace', dialFaceGroup, WATCH_PARTS.DIAL_FACE);
   }
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -1379,8 +1371,7 @@ export class WatchModel {
 
       for (let i = 0; i < this.photonCount; i++) {
         const t = ((i / this.photonCount) + this.energyProgress) % 1.0;
-        const pos = this.energyFlowCurve.getPointAt(t);
-        this.photonDummy.position.copy(pos);
+        this.energyFlowCurve.getPointAt(t, this.photonDummy.position);
         const pulse = 0.8 + 0.35 * Math.sin(t * Math.PI * 6 + this.energyProgress * Math.PI * 4);
         this.photonDummy.scale.set(pulse, pulse, pulse);
         this.photonDummy.updateMatrix();
@@ -1389,7 +1380,8 @@ export class WatchModel {
       this.energyPhotons.instanceMatrix.needsUpdate = true;
 
       if (this.energyConduitMat) {
-        this.energyConduitMat.emissiveIntensity = 0.65 + 0.35 * Math.sin(this.energyProgress * Math.PI * 8);
+        // Synchronized to 4.0 Hz / 28,800 VPH balance wheel harmonic cadence
+        this.energyConduitMat.emissiveIntensity = 0.65 + 0.35 * Math.abs(Math.sin(this.gearRotations.balance));
       }
     }
   }

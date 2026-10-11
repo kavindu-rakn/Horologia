@@ -393,6 +393,9 @@ class HorologiaApp {
     // Global Escape key and backdrop dismissal for all modals and drawers
     window.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
+        const dossierModal = document.getElementById('dossier-modal');
+        const wasDossierOpen = dossierModal && dossierModal.classList.contains('open');
+
         document.querySelectorAll('.modal-overlay.open').forEach(modal => {
           modal.classList.remove('open');
         });
@@ -402,13 +405,23 @@ class HorologiaApp {
           labDrawer.classList.remove('open');
           if (btnCustomizer) btnCustomizer.classList.remove('active');
         }
+
+        if (wasDossierOpen) {
+          const ch = CHAPTERS[this.currentChapter];
+          if (ch) this.sceneManager.animateCamera(ch.camera, ch.lookAt, 1.2);
+        }
       }
     });
 
     document.querySelectorAll('.modal-overlay').forEach(modal => {
       modal.addEventListener('click', (e) => {
         if (e.target === modal) {
+          const wasDossier = (modal.id === 'dossier-modal');
           modal.classList.remove('open');
+          if (wasDossier) {
+            const ch = CHAPTERS[this.currentChapter];
+            if (ch) this.sceneManager.animateCamera(ch.camera, ch.lookAt, 1.2);
+          }
         }
       });
     });
@@ -729,8 +742,15 @@ class HorologiaApp {
     const btnFocus = document.getElementById('btn-dossier-focus');
 
     const closeModal = () => {
-      if (modal) modal.classList.remove('open');
-      soundEngine.playMetallicClick();
+      if (modal && modal.classList.contains('open')) {
+        modal.classList.remove('open');
+        soundEngine.playMetallicClick();
+        // Restore active chapter camera framing so user isn't stuck in macro zoom
+        const ch = CHAPTERS[this.currentChapter];
+        if (ch) {
+          this.sceneManager.animateCamera(ch.camera, ch.lookAt, 1.2);
+        }
+      }
     };
 
     if (btnClose) btnClose.addEventListener('click', closeModal);
