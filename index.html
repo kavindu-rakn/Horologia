@@ -2,11 +2,62 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Horologia — Exploded 3D Mechanical Watch</title>
-  <meta name="description" content="A cinematic scroll-driven journey through the anatomy of a haute horlogerie mechanical watch. Explore every gear, jewel, and escapement in stunning 3D.">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+  <title>Horologia — Haute Horlogerie 3D Luxury Watch Showcase &amp; Community Atelier</title>
+  <meta name="description" content="A cinematic WebGL scroll-driven journey through the anatomy of a haute horlogerie mechanical watch. Customize bespoke timepieces and explore community watch designs in real-time 3D.">
+  <meta name="theme-color" content="#08090d">
+  <link rel="canonical" href="https://horologia-kvn.vercel.app/">
+
+  <!-- OpenGraph Metadata -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Horologia — Haute Horlogerie 3D Luxury Watch Showcase &amp; Community Atelier">
+  <meta property="og:description" content="An interactive 3D Haute Horlogerie luxury watch showcase and bespoke community design atelier powered by WebGL and procedural kinematics.">
+  <meta property="og:url" content="https://horologia-kvn.vercel.app/">
+  <meta property="og:site_name" content="Horologia">
+  <meta property="og:image" content="https://horologia-kvn.vercel.app/favicon.svg">
+
+  <!-- Twitter Card Metadata -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Horologia — Haute Horlogerie 3D Luxury Watch Showcase">
+  <meta name="twitter:description" content="Explore, deconstruct, and design haute horlogerie mechanical timepieces in real-time 3D.">
+  <meta name="twitter:image" content="https://horologia-kvn.vercel.app/favicon.svg">
+
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <link rel="alternate icon" href="/favicon.ico">
+
+  <!-- Typography Preconnect -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Schema.org Structured Data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "WebApplication",
+        "@id": "https://horologia-kvn.vercel.app/#app",
+        "name": "Horologia",
+        "url": "https://horologia-kvn.vercel.app/",
+        "applicationCategory": "DesignApplication",
+        "operatingSystem": "All modern browsers",
+        "description": "Interactive Haute Horlogerie 3D luxury watch deconstruction and community atelier."
+      },
+      {
+        "@type": "Product",
+        "@id": "https://horologia-kvn.vercel.app/#product",
+        "name": "Horologia Calibre H-01 In-House Mechanical Watch",
+        "description": "Manufacture Genevoise 41mm mechanical timepiece with 28,800 VPH Swiss lever escapement, Glucydur balance, and 72-hour power reserve.",
+        "brand": {
+          "@type": "Brand",
+          "name": "Horologia Manufacture Genevoise"
+        }
+      }
+    ]
+  }
+  </script>
+
   <link rel="stylesheet" href="/src/style.css">
 </head>
 <body>
@@ -24,7 +75,14 @@
       <span class="brand-name">HOROLOGIA</span>
       <span class="brand-sub">Haute Horlogerie</span>
     </div>
-    <nav id="header-nav">
+
+    <!-- Mobile Menu Toggle Button -->
+    <button id="btn-menu-toggle" class="nav-btn mobile-menu-btn" aria-label="Toggle Navigation Menu" aria-expanded="false" aria-controls="header-nav">
+      <span id="menu-icon">☰</span>
+      <span class="mobile-menu-text">Menu</span>
+    </button>
+
+    <nav id="header-nav" aria-label="Main Navigation">
       <button id="btn-sound" class="nav-btn" title="Toggle Sound">
         <span id="sound-icon">🔊</span>
         <span id="sound-label">Audio On</span>
@@ -37,53 +95,50 @@
   </header>
 
   <!-- ═══════════════════════════════════════════
-       FIXED CHAPTER CARD (LEFT OVERLAY)
+       MAIN INTERACTIVE HUD OVERLAYS
   ═══════════════════════════════════════════ -->
-  <div id="chapter-card">
-    <div id="chapter-number">Chapter <span id="chapter-num">01</span></div>
-    <h2 id="chapter-title">The Art of Mechanical Precision</h2>
-    <p id="chapter-body">A single mechanical watch contains over 200 hand-finished components — each one indispensable. Scroll to disassemble every layer of this masterpiece, crafted to last centuries.</p>
-    <div id="chapter-tags">
-      <span class="tag" id="tag-1">28,800 VPH</span>
-      <span class="tag" id="tag-2">Swiss Made</span>
-    </div>
-    <div id="chapter-progress-bar">
-      <div id="chapter-progress-fill"></div>
-    </div>
-  </div>
+  <main id="main-content">
+    <!-- Chapter Card -->
+    <article id="chapter-card" aria-live="polite">
+      <div id="chapter-number">Chapter <span id="chapter-num">01</span></div>
+      <h2 id="chapter-title">The Art of Mechanical Precision</h2>
+      <p id="chapter-body">A single mechanical watch contains over 200 hand-finished components — each one indispensable. Scroll to disassemble every layer of this masterpiece, crafted to last centuries.</p>
+      <div id="chapter-tags">
+        <span class="tag" id="tag-1">28,800 VPH</span>
+        <span class="tag" id="tag-2">Swiss Made</span>
+      </div>
+      <div id="chapter-progress-bar">
+        <div id="chapter-progress-fill"></div>
+      </div>
+    </article>
 
-  <!-- ═══════════════════════════════════════════
-       FIXED CHAPTER DOT NAVIGATION (RIGHT)
-  ═══════════════════════════════════════════ -->
-  <nav id="chapter-dots" aria-label="Chapter navigation">
-    <button class="dot active" data-chapter="0" title="Hero"></button>
-    <button class="dot" data-chapter="1" title="Sapphire Crystal"></button>
-    <button class="dot" data-chapter="2" title="Dial & Hands"></button>
-    <button class="dot" data-chapter="3" title="Gear Train"></button>
-    <button class="dot" data-chapter="4" title="Balance Wheel"></button>
-    <button class="dot" data-chapter="5" title="Bridges & Jewels"></button>
-    <button class="dot" data-chapter="6" title="Full Explode"></button>
-  </nav>
+    <!-- Chapter Dot Navigation (Right Side) -->
+    <nav id="chapter-dots" aria-label="Chapter navigation">
+      <button class="dot active" data-chapter="0" title="Chapter 1: Hero" aria-label="Navigate to Chapter 1: Hero"></button>
+      <button class="dot" data-chapter="1" title="Chapter 2: Domed Sapphire Crystal" aria-label="Navigate to Chapter 2: Domed Sapphire Crystal"></button>
+      <button class="dot" data-chapter="2" title="Chapter 3: Dial &amp; Hands" aria-label="Navigate to Chapter 3: Dial and Hands"></button>
+      <button class="dot" data-chapter="3" title="Chapter 4: Precision Gear Train" aria-label="Navigate to Chapter 4: Precision Gear Train"></button>
+      <button class="dot" data-chapter="4" title="Chapter 5: Balance Wheel &amp; Escapement" aria-label="Navigate to Chapter 5: Balance Wheel and Escapement"></button>
+      <button class="dot" data-chapter="5" title="Chapter 6: Movement Bridges &amp; Jewels" aria-label="Navigate to Chapter 6: Movement Bridges and Jewels"></button>
+      <button class="dot" data-chapter="6" title="Chapter 7: Complete Holographic Matrix" aria-label="Navigate to Chapter 7: Complete Holographic Matrix"></button>
+    </nav>
 
-  <!-- ═══════════════════════════════════════════
-       FIXED EXPLODE HUD (BOTTOM CENTER)
-  ═══════════════════════════════════════════ -->
-  <div id="explode-hud">
-    <label for="explode-slider">Explode</label>
-    <input type="range" id="explode-slider" min="0" max="1" step="0.001" value="0">
-    <span id="explode-percent">0%</span>
-  </div>
+    <!-- Explode HUD (Bottom Center) -->
+    <section id="explode-hud" aria-label="Exploded View Controller">
+      <label for="explode-slider">Explode</label>
+      <input type="range" id="explode-slider" min="0" max="1" step="0.001" value="0" aria-label="Explosion disassembly progression slider">
+      <span id="explode-percent">0%</span>
+    </section>
 
-  <!-- ═══════════════════════════════════════════
-       FIXED PART INSPECTOR (HOVER HUD)
-  ═══════════════════════════════════════════ -->
-  <div id="part-inspector">
-    <div id="inspector-category"></div>
-    <h3 id="inspector-title"></h3>
-    <p id="inspector-desc"></p>
-    <div id="inspector-meta"></div>
-    <div class="inspector-hint">Click part to inspect dossier &amp; focus 🔍</div>
-  </div>
+    <!-- Hover Part Inspector -->
+    <aside id="part-inspector" aria-label="Component Inspector HUD" role="region">
+      <div id="inspector-category"></div>
+      <h3 id="inspector-title"></h3>
+      <p id="inspector-desc"></p>
+      <div id="inspector-meta"></div>
+      <div class="inspector-hint">Click part to inspect dossier &amp; focus 🔍</div>
+    </aside>
+  </main>
 
   <!-- ═══════════════════════════════════════════
        SCROLL PROXY — drives all animations

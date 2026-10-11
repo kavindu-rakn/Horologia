@@ -1,0 +1,17 @@
+# Horologia
+
+> Haute Horlogerie 3D Luxury Watch Showcase & Community Atelier
+
+Horologia is an open-source, cinematic WebGL application delivering real-time procedural 3D deconstructions of luxury mechanical timepieces.
+
+## Links & Documentation
+- [Horologia Showcase](https://horologia-kvn.vercel.app/): Interactive 3D Haute Horlogerie experience
+- [Horologia Source Repository](https://github.com/kavindu-rakn/Horologia): Full source code, kinematic simulation, and audio synthesis engine
+
+## Key Capabilities
+- **7-Chapter Cinematic Scroll Engine**: Smooth scroll-driven exploded assembly of 200+ mechanical components.
+- **Calibre H-01 In-House Kinematics**: 28,800 VPH (4.0 Hz / 8 beats per second) escapement simulation, deadbeat seconds stepping, and variable inertia Glucydur balance wheel harmonic oscillation.
+- **Synthesized Web Audio Engine**: Pre-rendered zero-allocation mechanical tick-tock, pallet fork clicks, and winding ratchet acoustics.
+- **Haute Horlogerie Atelier**: Granular customizer suite for casings, dials, bezels, straps, and Super-LumiNova luminescence.
+- **Community Design Platform**: 1-click WebGL snapshot generation, client-side persistence, and shareable URL parameter encoding.
+- **Horological Anatomy Dossiers**: Educational deep dives into metallurgical science, Vickers hardness ratings, and finishing techniques (Anglage, Perlage, Côtes de Genève).
