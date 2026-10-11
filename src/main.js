@@ -116,11 +116,12 @@ class HorologiaApp {
     // Check URL parameters for custom shared design via DesignStorageManager
     const initialConfig = this.storageManager.decodeShareableURL();
     if (initialConfig) {
-      if (initialConfig.config) {
-        this.watchModel.applyCustomConfig(initialConfig.config);
-      } else if (initialConfig.schemeId) {
+      if (initialConfig.schemeId) {
         const match = MATERIAL_SCHEMES.find(s => s.id === initialConfig.schemeId);
         if (match) this.watchModel.applyMaterialScheme(match);
+      }
+      if (initialConfig.config) {
+        this.watchModel.applyCustomConfig(initialConfig.config);
       }
     }
 
@@ -366,6 +367,29 @@ class HorologiaApp {
       soundLabel.textContent = muted ? 'Muted' : 'Audio On';
     });
     window.addEventListener('click', () => soundEngine.init(), { once: true });
+
+    // Global Escape key and backdrop dismissal for all modals and drawers
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        document.querySelectorAll('.modal-overlay.open').forEach(modal => {
+          modal.classList.remove('open');
+        });
+        const labDrawer = document.getElementById('material-lab');
+        const btnCustomizer = document.getElementById('btn-customizer');
+        if (labDrawer && labDrawer.classList.contains('open')) {
+          labDrawer.classList.remove('open');
+          if (btnCustomizer) btnCustomizer.classList.remove('active');
+        }
+      }
+    });
+
+    document.querySelectorAll('.modal-overlay').forEach(modal => {
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+          modal.classList.remove('open');
+        }
+      });
+    });
   }
 
   // ── Atelier Studio (Customizer Suite) ─────────────────────────────────────
@@ -734,11 +758,12 @@ class HorologiaApp {
       btn.addEventListener('click', () => {
         const forkDraft = this.storageManager.forkDesign(btn.dataset.id);
         if (forkDraft) {
-          if (forkDraft.config) {
-            this.watchModel.applyCustomConfig(forkDraft.config);
-          } else if (forkDraft.schemeId) {
+          if (forkDraft.schemeId) {
             const scheme = MATERIAL_SCHEMES.find(s => s.id === forkDraft.schemeId) || MATERIAL_SCHEMES[0];
             this.watchModel.applyMaterialScheme(scheme);
+          }
+          if (forkDraft.config) {
+            this.watchModel.applyCustomConfig(forkDraft.config);
           }
 
           // Pre-fill save form

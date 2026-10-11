@@ -1292,9 +1292,10 @@ export class WatchModel {
     this.materials.bezel.color.setHex(scheme.bezelColor);
     this.materials.dial.color.setHex(scheme.dialColor);
     this.materials.dialFace.color.setHex(scheme.dialColor || 0x0a101d);
-    this.materials.dialFace.transparent = false;
-    this.materials.dialFace.opacity = 1.0;
-    this.materials.dialFace.visible = true;
+    const isSkeleton = (scheme.config?.dial === 'skeleton');
+    this.materials.dialFace.transparent = isSkeleton;
+    this.materials.dialFace.opacity = isSkeleton ? 0.18 : 1.0;
+    this.materials.dialFace.visible = !isSkeleton;
     this.materials.strap.color.setHex(scheme.strapColor);
     this.materials.gear.color.setHex(scheme.gearColor);
     this.materials.plate.color.setHex(scheme.plateColor);
