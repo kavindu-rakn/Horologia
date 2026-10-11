@@ -133,6 +133,7 @@ class HorologiaApp {
     this.isDragging = false;     // True when user drag-rotates the watch
     this.dragStart = { x: 0, y: 0 };
     this.dragRotStart = { x: 0, y: 0 };
+    this.prefersReducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches ?? false;
 
     this.initSmoothScroll();
     this.initChapterEngine();
@@ -207,10 +208,17 @@ class HorologiaApp {
     document.querySelectorAll('.dot').forEach(dot => {
       dot.addEventListener('click', () => {
         const ch = parseInt(dot.dataset.chapter);
-        const px = (ch + 0.15) * window.innerHeight;
-        this.lenis.scrollTo(px, { duration: 1.2 });
+        this.goToChapter(ch);
       });
     });
+  }
+
+  goToChapter(index) {
+    const clamped = Math.max(0, Math.min(CHAPTERS.length - 1, index));
+    const px = (clamped + 0.15) * window.innerHeight;
+    if (this.lenis) {
+      this.lenis.scrollTo(px, { duration: this.prefersReducedMotion ? 0.3 : 1.2 });
+    }
   }
 
   // ── Activate a Chapter — Camera + Explosion + Card ───────────────────────
@@ -390,9 +398,54 @@ class HorologiaApp {
       });
     }
 
-    // Global Escape key and backdrop dismissal for all modals and drawers
+    // Mobile Menu Toggle
+    const btnMenuToggle = document.getElementById('btn-menu-toggle');
+    const headerNav = document.getElementById('header-nav');
+    if (btnMenuToggle && headerNav) {
+      btnMenuToggle.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const isOpen = headerNav.classList.toggle('mobile-open');
+        btnMenuToggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+        soundEngine.playMetallicClick();
+      });
+
+      // Close mobile menu when a nav link is clicked
+      headerNav.querySelectorAll('.nav-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          headerNav.classList.remove('mobile-open');
+          btnMenuToggle.setAttribute('aria-expanded', 'false');
+        });
+      });
+
+      // Close mobile menu on outside click
+      document.addEventListener('click', (e) => {
+        if (!e.target.closest('#site-header') && headerNav.classList.contains('mobile-open')) {
+          headerNav.classList.remove('mobile-open');
+          btnMenuToggle.setAttribute('aria-expanded', 'false');
+        }
+      });
+    }
+
+    // Global Keyboard Navigation Shortcuts & Escape Handling
     window.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') {
+      // Don't intercept if user is typing in form inputs/textarea
+      if (['INPUT', 'TEXTAREA'].includes(e.target.tagName)) return;
+
+      if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+        this.goToChapter(this.currentChapter + 1);
+        e.preventDefault();
+      } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+        this.goToChapter(this.currentChapter - 1);
+        e.preventDefault();
+      } else if (e.key.toLowerCase() === 'm') {
+        btnSound?.click();
+      } else if (e.key.toLowerCase() === 'k' || e.key.toLowerCase() === 'f') {
+        btnEnergyFlow?.click();
+      } else if (e.key.toLowerCase() === 'a') {
+        document.getElementById('btn-customizer')?.click();
+      } else if (e.key.toLowerCase() === 's') {
+        document.getElementById('btn-showcase')?.click();
+      } else if (e.key === 'Escape') {
         const dossierModal = document.getElementById('dossier-modal');
         const wasDossierOpen = dossierModal && dossierModal.classList.contains('open');
 
@@ -404,6 +457,11 @@ class HorologiaApp {
         if (labDrawer && labDrawer.classList.contains('open')) {
           labDrawer.classList.remove('open');
           if (btnCustomizer) btnCustomizer.classList.remove('active');
+        }
+
+        if (headerNav && headerNav.classList.contains('mobile-open')) {
+          headerNav.classList.remove('mobile-open');
+          btnMenuToggle?.setAttribute('aria-expanded', 'false');
         }
 
         if (wasDossierOpen) {
@@ -996,7 +1054,7 @@ class HorologiaApp {
     };
 
     canvas.addEventListener('pointerdown', (e) => {
-      if (e.button !== 0 || isOverUI(e)) return;
+      if ((e.button !== undefined && e.button !== 0) || isOverUI(e)) return;
       this.isDragging = true;
       this.userHasRotated = true;
       this.dragStart = { x: e.clientX, y: e.clientY };
@@ -1009,6 +1067,30 @@ class HorologiaApp {
       canvas.style.cursor = 'grabbing';
       e.preventDefault();
     });
+
+    // Touch pinch-to-zoom for mobile screens
+    let pinchStartDist = 0;
+    canvas.addEventListener('touchstart', (e) => {
+      if (e.touches.length === 2) {
+        pinchStartDist = Math.hypot(
+          e.touches[0].clientX - e.touches[1].clientX,
+          e.touches[0].clientY - e.touches[1].clientY
+        );
+      }
+    }, { passive: true });
+
+    canvas.addEventListener('touchmove', (e) => {
+      if (e.touches.length === 2 && pinchStartDist > 0) {
+        const currentDist = Math.hypot(
+          e.touches[0].clientX - e.touches[1].clientX,
+          e.touches[0].clientY - e.touches[1].clientY
+        );
+        const delta = (currentDist - pinchStartDist) * 0.015;
+        pinchStartDist = currentDist;
+        const cam = this.sceneManager.camera;
+        cam.position.z = Math.max(3.0, Math.min(10.0, cam.position.z - delta));
+      }
+    }, { passive: true });
 
     window.addEventListener('pointermove', (e) => {
       if (!this.isDragging) return;
@@ -1040,8 +1122,8 @@ class HorologiaApp {
     this.lastTime = now;
     this.oscillationTime += delta;
 
-    // Gentle ±15° oscillating swing (not full spin — always shows front face)
-    if (this.watchModel.autoRotate && !this.userHasRotated) {
+    // Gentle ±15° oscillating swing (respecting prefers-reduced-motion)
+    if (!this.prefersReducedMotion && this.watchModel.autoRotate && !this.userHasRotated) {
       const baseY = CHAPTERS[this.currentChapter].watchRot.y;
       this.watchModel.group.rotation.y = baseY + Math.sin(this.oscillationTime * 0.45) * 0.26;
     }
