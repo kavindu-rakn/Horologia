@@ -75,8 +75,8 @@ export class SceneManager {
     this.scene.add(this.ambientLight);
 
     // Primary studio key light — angled overhead warm daylight
-    this.keyLight = new THREE.DirectionalLight(0xfffaed, 3.2);
-    this.keyLight.position.set(4, 7, 5);
+    this.keyLight = new THREE.DirectionalLight(0xfffaed, 3.0);
+    this.keyLight.position.set(6, 8, 4);
     this.keyLight.castShadow = true;
     this.keyLight.shadow.mapSize.set(2048, 2048);
     this.keyLight.shadow.camera.near = 0.1;
@@ -95,7 +95,7 @@ export class SceneManager {
 
     // Front soft fill light — ensures dial textures and sub-dials are legible
     this.fillLight = new THREE.DirectionalLight(0xfff0db, 1.2);
-    this.fillLight.position.set(0, -1, 6);
+    this.fillLight.position.set(-2, 2, 6);
     this.scene.add(this.fillLight);
 
     // Under-chassis accent glow — illuminates movement bridges during exploded scroll
@@ -104,10 +104,10 @@ export class SceneManager {
     this.scene.add(this.underGlow);
 
     // High-focus theatrical spot tracks center
-    this.spotLight = new THREE.SpotLight(0xffffff, 2.5);
-    this.spotLight.position.set(0, 9, 4);
-    this.spotLight.angle = 0.42;
-    this.spotLight.penumbra = 0.6;
+    this.spotLight = new THREE.SpotLight(0xffffff, 2.2);
+    this.spotLight.position.set(4, 10, 4);
+    this.spotLight.angle = 0.45;
+    this.spotLight.penumbra = 0.7;
     this.spotLight.decay = 1.2;
     this.spotLight.castShadow = true;
     this.spotLight.target.position.set(0, 0, 0);
