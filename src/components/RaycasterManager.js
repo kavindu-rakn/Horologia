@@ -3,14 +3,17 @@ import * as THREE from 'three';
 import { soundEngine } from '../audio/SoundEngine.js';
 
 export class RaycasterManager {
-  constructor(sceneManager, watchModel, hudCallback) {
+  constructor(sceneManager, watchModel, hudCallback, clickCallback = null) {
     this.sceneManager = sceneManager;
     this.watchModel = watchModel;
     this.hudCallback = hudCallback;
+    this.clickCallback = clickCallback;
 
     this.raycaster = new THREE.Raycaster();
     this.mouse = new THREE.Vector2(-999, -999);
     this.hoveredPart = null;
+    this.highlightedMaterials = new Map();
+    this.pointerDownPos = { x: 0, y: 0 };
 
     this.bindEvents();
   }
@@ -26,9 +29,24 @@ export class RaycasterManager {
       if (this.hudCallback) this.hudCallback(null, null);
     });
 
-    window.addEventListener('click', () => {
-      if (this.hoveredPart) {
+    window.addEventListener('pointerdown', (e) => {
+      this.pointerDownPos.x = e.clientX;
+      this.pointerDownPos.y = e.clientY;
+    });
+
+    window.addEventListener('click', (e) => {
+      // Don't trigger if click was on UI controls
+      if (e.target.closest('#site-header, #chapter-card, #explode-hud, #chapter-dots, #material-lab, .modal-overlay')) {
+        return;
+      }
+      // Suppress click if user was drag-rotating (> 6px displacement)
+      const dist = Math.hypot(e.clientX - this.pointerDownPos.x, e.clientY - this.pointerDownPos.y);
+      if (dist > 6) {
+        return;
+      }
+      if (this.hoveredPart && this.clickCallback) {
         soundEngine.playRatchetWinding();
+        this.clickCallback(this.hoveredPart.userData.partInfo, this.hoveredPart.userData.partId);
       }
     });
   }
@@ -36,11 +54,19 @@ export class RaycasterManager {
   update() {
     this.raycaster.setFromCamera(this.mouse, this.sceneManager.camera);
 
+    const isAssembled = (this.watchModel.currentChapter === 0);
     const meshesToIntersect = [];
+
     Object.values(this.watchModel.parts).forEach(partGroup => {
+      const partId = partGroup.userData.partId;
+      // In assembled mode, exclude outer sapphire crystal so users can hover dial, hands, & movement
+      if (isAssembled && partId === 'sapphireGlass') {
+        return;
+      }
+
       partGroup.traverse(child => {
         if (child.isMesh && child.visible) {
-          child.userData.parentPartId = partGroup.userData.partId;
+          child.userData.parentPartId = partId;
           meshesToIntersect.push(child);
         }
       });
@@ -75,48 +101,37 @@ export class RaycasterManager {
   }
 
   applyHighlight(partGroup) {
-    const isSapphire = partGroup.userData && partGroup.userData.partId === 'sapphireGlass';
+    const isSapphire = (partGroup.userData?.partId === 'sapphireGlass');
     partGroup.traverse(child => {
-      if (child.isMesh && child.material) {
-        // Save reference to shared original material
-        if (!child.userData.originalMaterial) {
-          child.userData.originalMaterial = child.material;
+      if (child.isMesh && child.material && child.material.emissive) {
+        const mat = child.material;
+        if (!this.highlightedMaterials.has(mat)) {
+          this.highlightedMaterials.set(mat, {
+            emissive: mat.emissive.getHex(),
+            intensity: mat.emissiveIntensity
+          });
         }
 
-        // Clone material so shared instances are not mutated globally
-        const highlightMat = child.material.clone();
-        if (isSapphire || (highlightMat.transmission && highlightMat.transmission > 0.5)) {
-          // Sapphire crystal: preserve transmission, subtle azure AR tint instead of muddy yellow
-          if (highlightMat.emissive) {
-            highlightMat.emissive.setHex(0x38bdf8);
-            highlightMat.emissiveIntensity = 0.12;
-          }
-        } else if (highlightMat.emissive) {
-          highlightMat.emissive.setHex(0xd4af37);
-          highlightMat.emissiveIntensity = 0.45;
+        if (isSapphire) {
+          mat.emissive.setHex(0x38bdf8);
+          mat.emissiveIntensity = 0.12;
+        } else {
+          // Subtle champagne gold rim glow without altering base PBR texture/metalness
+          mat.emissive.setHex(0xc9a44a);
+          mat.emissiveIntensity = 0.28;
         }
-        child.material = highlightMat;
       }
     });
   }
 
   clearHover() {
-    if (!this.hoveredPart) return;
-
-    this.hoveredPart.traverse(child => {
-      if (child.isMesh && child.userData.originalMaterial) {
-        const clonedMat = child.material;
-        // Cleanly restore original shared material
-        child.material = child.userData.originalMaterial;
-        delete child.userData.originalMaterial;
-
-        // Cleanly dispose cloned material to prevent WebGL shader leak
-        if (clonedMat && clonedMat !== child.material) {
-          clonedMat.dispose();
-        }
+    for (const [mat, orig] of this.highlightedMaterials.entries()) {
+      if (mat && mat.emissive) {
+        mat.emissive.setHex(orig.emissive);
+        mat.emissiveIntensity = orig.intensity;
       }
-    });
-
+    }
+    this.highlightedMaterials.clear();
     this.hoveredPart = null;
   }
 }
