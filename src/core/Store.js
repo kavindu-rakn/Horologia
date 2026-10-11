@@ -5,7 +5,6 @@ export class Store {
     this.state = {
       currentChapter: 0,
       activeModal: null,
-      isMuted: false,
       explodeProgress: 0,
       hoveredPartId: null,
       ...initialState
