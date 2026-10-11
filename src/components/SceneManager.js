@@ -48,54 +48,67 @@ export class SceneManager {
     this.scene = new THREE.Scene();
     this.scene.fog = new THREE.FogExp2(0x08090d, 0.04);
 
-    // Subtle grid floor
-    const gridHelper = new THREE.GridHelper(20, 40, 0x1a1c24, 0x111318);
-    gridHelper.position.y = -3.5;
-    gridHelper.material.opacity = 0.35;
+    // Subtle luxury studio pedestal floor
+    const floorGeo = new THREE.PlaneGeometry(30, 30);
+    const floorMat = new THREE.MeshStandardMaterial({
+      color: 0x07090e,
+      roughness: 0.85,
+      metalness: 0.1,
+    });
+    const floor = new THREE.Mesh(floorGeo, floorMat);
+    floor.rotation.x = -Math.PI / 2;
+    floor.position.y = -3.8;
+    floor.receiveShadow = true;
+    this.scene.add(floor);
+
+    // Subtle dark circular vignette ring
+    const gridHelper = new THREE.GridHelper(16, 32, 0x1f2433, 0x0c0f18);
+    gridHelper.position.y = -3.79;
+    gridHelper.material.opacity = 0.25;
     gridHelper.material.transparent = true;
     this.scene.add(gridHelper);
   }
 
   initLighting() {
-    // Warm ambient
-    this.ambientLight = new THREE.AmbientLight(0xfff0d8, 0.35);
+    // Warm balanced ambient
+    this.ambientLight = new THREE.AmbientLight(0xfff5ea, 0.45);
     this.scene.add(this.ambientLight);
 
-    // Key light — warm top
-    this.keyLight = new THREE.DirectionalLight(0xfff3e0, 2.8);
-    this.keyLight.position.set(3, 6, 4);
+    // Primary studio key light — angled overhead warm daylight
+    this.keyLight = new THREE.DirectionalLight(0xfffaed, 3.0);
+    this.keyLight.position.set(6, 8, 4);
     this.keyLight.castShadow = true;
     this.keyLight.shadow.mapSize.set(2048, 2048);
     this.keyLight.shadow.camera.near = 0.1;
-    this.keyLight.shadow.camera.far = 30;
-    this.keyLight.shadow.camera.left = -8;
-    this.keyLight.shadow.camera.right = 8;
-    this.keyLight.shadow.camera.top = 8;
-    this.keyLight.shadow.camera.bottom = -8;
-    this.keyLight.shadow.bias = -0.001;
+    this.keyLight.shadow.camera.far = 25;
+    this.keyLight.shadow.camera.left = -6;
+    this.keyLight.shadow.camera.right = 6;
+    this.keyLight.shadow.camera.top = 6;
+    this.keyLight.shadow.camera.bottom = -6;
+    this.keyLight.shadow.bias = -0.0005;
     this.scene.add(this.keyLight);
 
-    // Cool rim light
-    this.rimLight = new THREE.DirectionalLight(0x4488ff, 1.4);
-    this.rimLight.position.set(-5, 2, -4);
+    // Razor-sharp lateral rim kicker — provides crisp edge bevel separation
+    this.rimLight = new THREE.DirectionalLight(0xd6e8ff, 2.2);
+    this.rimLight.position.set(-6, 3, -4);
     this.scene.add(this.rimLight);
 
-    // Fill light (warm, from below-front)
-    this.fillLight = new THREE.DirectionalLight(0xffe8b0, 0.8);
-    this.fillLight.position.set(0, -3, 5);
+    // Front soft fill light — ensures dial textures and sub-dials are legible
+    this.fillLight = new THREE.DirectionalLight(0xfff0db, 1.2);
+    this.fillLight.position.set(-2, 2, 6);
     this.scene.add(this.fillLight);
 
-    // Accent under-glow (golden)
-    this.underGlow = new THREE.PointLight(0xc9a44a, 0.6, 8);
-    this.underGlow.position.set(0, -2, 2);
+    // Under-chassis accent glow — illuminates movement bridges during exploded scroll
+    this.underGlow = new THREE.PointLight(0xd4af37, 0.8, 10);
+    this.underGlow.position.set(0, -1.8, 1.5);
     this.scene.add(this.underGlow);
 
-    // Spotlight for drama — tracks watch center
-    this.spotLight = new THREE.SpotLight(0xffffff, 3.0);
-    this.spotLight.position.set(0, 8, 3);
-    this.spotLight.angle = 0.35;
-    this.spotLight.penumbra = 0.5;
-    this.spotLight.decay = 1.5;
+    // High-focus theatrical spot tracks center
+    this.spotLight = new THREE.SpotLight(0xffffff, 2.2);
+    this.spotLight.position.set(4, 10, 4);
+    this.spotLight.angle = 0.45;
+    this.spotLight.penumbra = 0.7;
+    this.spotLight.decay = 1.2;
     this.spotLight.castShadow = true;
     this.spotLight.target.position.set(0, 0, 0);
     this.scene.add(this.spotLight);
@@ -103,27 +116,71 @@ export class SceneManager {
   }
 
   initEnvironment() {
-    // Procedural gradient environment map
+    // Studio HDRI light stage using PMREMGenerator
     const pmremGenerator = new THREE.PMREMGenerator(this.renderer);
     pmremGenerator.compileEquirectangularShader();
 
     const envScene = new THREE.Scene();
-    envScene.background = new THREE.Color(0x0a0c12);
+    envScene.background = new THREE.Color(0x07090e);
 
-    const envGeometry = new THREE.SphereGeometry(50, 32, 32);
-    const envMaterial = new THREE.MeshBasicMaterial({
-      color: 0x1a1e2e,
-      side: THREE.BackSide
-    });
-    envScene.add(new THREE.Mesh(envGeometry, envMaterial));
+    // Studio enclosure sphere
+    const envDome = new THREE.Mesh(
+      new THREE.SphereGeometry(60, 32, 32),
+      new THREE.MeshBasicMaterial({ color: 0x090c14, side: THREE.BackSide })
+    );
+    envScene.add(envDome);
 
-    // Add a few point lights to the env scene for reflection variety
-    const el1 = new THREE.PointLight(0xc9a44a, 1, 100);
-    el1.position.set(20, 10, 10);
-    envScene.add(el1);
-    const el2 = new THREE.PointLight(0x4488cc, 0.8, 100);
-    el2.position.set(-20, -5, -10);
-    envScene.add(el2);
+    // ── Simulated Studio Softbox Panels ─────────────────────────────────────
+    // 1. Overhead Master Softbox: wide white gradient for bezel and sapphire crystal glint
+    const topSoftbox = new THREE.Mesh(
+      new THREE.PlaneGeometry(24, 16),
+      new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide })
+    );
+    topSoftbox.position.set(0, 14, 2);
+    topSoftbox.rotation.x = Math.PI / 2;
+    envScene.add(topSoftbox);
+
+    // 2. Lateral Right Key Softbox: warm white studio strip
+    const rightSoftbox = new THREE.Mesh(
+      new THREE.PlaneGeometry(8, 20),
+      new THREE.MeshBasicMaterial({ color: 0xfff6e6, side: THREE.DoubleSide })
+    );
+    rightSoftbox.position.set(12, 5, 4);
+    rightSoftbox.rotation.y = -Math.PI / 3;
+    envScene.add(rightSoftbox);
+
+    // 3. Lateral Left Rim Softbox: cool cyan-tinted highlight strip for chamfer bevels
+    const leftSoftbox = new THREE.Mesh(
+      new THREE.PlaneGeometry(6, 18),
+      new THREE.MeshBasicMaterial({ color: 0xd9ebff, side: THREE.DoubleSide })
+    );
+    leftSoftbox.position.set(-14, 4, -4);
+    leftSoftbox.rotation.y = Math.PI / 3;
+    envScene.add(leftSoftbox);
+
+    // 4. Low Horizon Warm Bounce: creates natural ground bounce for case flanks
+    const bottomBounce = new THREE.Mesh(
+      new THREE.PlaneGeometry(20, 20),
+      new THREE.MeshBasicMaterial({ color: 0x241d15, side: THREE.DoubleSide })
+    );
+    bottomBounce.position.set(0, -10, 0);
+    bottomBounce.rotation.x = -Math.PI / 2;
+    envScene.add(bottomBounce);
+
+    // 5. Pinpoint Specular Sparkle Glint Meshes (baked into PMREM environment map)
+    const glint1 = new THREE.Mesh(
+      new THREE.SphereGeometry(1.2, 16, 16),
+      new THREE.MeshBasicMaterial({ color: 0xffffff })
+    );
+    glint1.position.set(10, 10, 8);
+    envScene.add(glint1);
+
+    const glint2 = new THREE.Mesh(
+      new THREE.SphereGeometry(0.9, 16, 16),
+      new THREE.MeshBasicMaterial({ color: 0xffdf99 })
+    );
+    glint2.position.set(-8, 6, -8);
+    envScene.add(glint2);
 
     const envRT = pmremGenerator.fromScene(envScene);
     this.scene.environment = envRT.texture;

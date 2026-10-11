@@ -75,6 +75,7 @@ export class RaycasterManager {
   }
 
   applyHighlight(partGroup) {
+    const isSapphire = partGroup.userData && partGroup.userData.partId === 'sapphireGlass';
     partGroup.traverse(child => {
       if (child.isMesh && child.material) {
         // Save reference to shared original material
@@ -84,9 +85,15 @@ export class RaycasterManager {
 
         // Clone material so shared instances are not mutated globally
         const highlightMat = child.material.clone();
-        if (highlightMat.emissive) {
+        if (isSapphire || (highlightMat.transmission && highlightMat.transmission > 0.5)) {
+          // Sapphire crystal: preserve transmission, subtle azure AR tint instead of muddy yellow
+          if (highlightMat.emissive) {
+            highlightMat.emissive.setHex(0x38bdf8);
+            highlightMat.emissiveIntensity = 0.12;
+          }
+        } else if (highlightMat.emissive) {
           highlightMat.emissive.setHex(0xd4af37);
-          highlightMat.emissiveIntensity = 0.55;
+          highlightMat.emissiveIntensity = 0.45;
         }
         child.material = highlightMat;
       }
@@ -98,9 +105,15 @@ export class RaycasterManager {
 
     this.hoveredPart.traverse(child => {
       if (child.isMesh && child.userData.originalMaterial) {
+        const clonedMat = child.material;
         // Cleanly restore original shared material
         child.material = child.userData.originalMaterial;
         delete child.userData.originalMaterial;
+
+        // Cleanly dispose cloned material to prevent WebGL shader leak
+        if (clonedMat && clonedMat !== child.material) {
+          clonedMat.dispose();
+        }
       }
     });
 

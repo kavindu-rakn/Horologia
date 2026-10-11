@@ -1,6 +1,5 @@
 // Horologia - Chapter-Driven Procedural 3D Mechanical Watch
 import * as THREE from 'three';
-import { gsap } from 'gsap';
 import { WATCH_PARTS, MATERIAL_SCHEMES } from '../utils/constants.js';
 
 // ── Chapter explosion targets ─────────────────────────────────────────────
@@ -97,37 +96,172 @@ export class WatchModel {
 
   initMaterials() {
     const s = this.currentScheme;
-    this.materials.case = new THREE.MeshStandardMaterial({ color: s.caseColor, metalness: s.caseMetalness, roughness: s.caseRoughness, envMapIntensity: 3.2 });
-    this.materials.bezel = new THREE.MeshStandardMaterial({ color: s.bezelColor, metalness: 0.95, roughness: 0.08, envMapIntensity: 3.5 });
-    this.materials.dial = new THREE.MeshStandardMaterial({ color: s.dialColor, metalness: 0.6, roughness: 0.2, envMapIntensity: 2.0 });
-    // Solid opaque dial face — deep navy/dark base
-    this.materials.dialFace = new THREE.MeshStandardMaterial({ color: 0x0d1420, metalness: 0.4, roughness: 0.35, envMapIntensity: 1.5 });
-    this.materials.glass = new THREE.MeshPhysicalMaterial({ color: 0xffffff, metalness: 0.05, roughness: 0.02, transmission: 0.94, thickness: 0.5, transparent: true, opacity: 0.22, ior: 1.77, reflectivity: 0.95 });
-    this.materials.plate = new THREE.MeshStandardMaterial({ color: s.plateColor, metalness: 0.9, roughness: 0.18, envMapIntensity: 2.5 });
-    this.materials.gear = new THREE.MeshStandardMaterial({ color: s.gearColor, metalness: 0.95, roughness: 0.12, envMapIntensity: 3.0 });
-    this.materials.escapement = new THREE.MeshStandardMaterial({ color: 0x556677, metalness: 0.92, roughness: 0.12 });
-    this.materials.jewel = new THREE.MeshPhysicalMaterial({ color: s.jewelColor, metalness: 0.1, roughness: 0.08, transmission: 0.88, transparent: true, opacity: 0.95, emissive: s.jewelColor, emissiveIntensity: 0.4 });
-    this.materials.lume = new THREE.MeshStandardMaterial({ color: s.lumeColor, emissive: s.lumeColor, emissiveIntensity: 0.9, roughness: 0.12 });
-    this.materials.strap = new THREE.MeshStandardMaterial({ color: s.strapColor, metalness: 0.1, roughness: 0.65 });
-    this.materials.hairspring = new THREE.LineBasicMaterial({ color: 0x4169e1, linewidth: 2 });
+    this.materials.case = new THREE.MeshStandardMaterial({
+      color: s.caseColor,
+      metalness: s.caseMetalness ?? 0.98,
+      roughness: s.caseRoughness ?? 0.14,
+      envMapIntensity: 3.2
+    });
+    this.materials.bezel = new THREE.MeshStandardMaterial({
+      color: s.bezelColor,
+      metalness: 0.95,
+      roughness: 0.08,
+      envMapIntensity: 3.5
+    });
+    this.materials.dial = new THREE.MeshStandardMaterial({
+      color: s.dialColor,
+      metalness: 0.85,
+      roughness: 0.18,
+      envMapIntensity: 2.4
+    });
+    // Solid opaque dial face — matching scheme dial tone with deep metallic sheen
+    this.materials.dialFace = new THREE.MeshStandardMaterial({
+      color: s.dialColor || 0x0a101d,
+      metalness: 0.72,
+      roughness: 0.24,
+      envMapIntensity: 2.2
+    });
+    // Authentic PBR Double-Domed Sapphire Crystal with Internal AR Sheen
+    this.materials.glass = new THREE.MeshPhysicalMaterial({
+      color: 0xffffff,
+      metalness: 0.0,
+      roughness: 0.01,
+      transmission: 0.98,
+      thickness: 0.35,
+      transparent: true,
+      opacity: 1.0,
+      ior: 1.77, // Sapphire refractive index
+      reflectivity: 0.9,
+      clearcoat: 1.0,
+      clearcoatRoughness: 0.01,
+      attenuationColor: new THREE.Color(0xdceeff),
+      attenuationDistance: 4.0
+    });
+    this.materials.plate = new THREE.MeshStandardMaterial({
+      color: s.plateColor,
+      metalness: 0.95,
+      roughness: 0.15,
+      envMapIntensity: 2.8
+    });
+    this.materials.gear = new THREE.MeshStandardMaterial({
+      color: s.gearColor,
+      metalness: 0.98,
+      roughness: 0.12,
+      envMapIntensity: 3.2
+    });
+    this.materials.escapement = new THREE.MeshStandardMaterial({
+      color: 0x4d5b6e,
+      metalness: 0.92,
+      roughness: 0.14
+    });
+    // Single-Crystal Pigeon-Blood Synthetic Ruby
+    this.materials.jewel = new THREE.MeshPhysicalMaterial({
+      color: s.jewelColor,
+      metalness: 0.04,
+      roughness: 0.03,
+      transmission: 0.84,
+      transparent: true,
+      opacity: 0.95,
+      ior: 1.76,
+      emissive: s.jewelColor,
+      emissiveIntensity: 0.28,
+      thickness: 0.18
+    });
+    // 18k Yellow Gold Chatons
+    this.materials.chaton = new THREE.MeshStandardMaterial({
+      color: 0xdfbe65,
+      metalness: 0.96,
+      roughness: 0.14,
+      envMapIntensity: 3.2
+    });
+    // Thermally Blued Screws (290°C Oxidation)
+    this.materials.bluedScrew = new THREE.MeshStandardMaterial({
+      color: 0x1b449c,
+      metalness: 0.92,
+      roughness: 0.12,
+      envMapIntensity: 3.0
+    });
+    this.materials.lume = new THREE.MeshStandardMaterial({
+      color: s.lumeColor,
+      emissive: s.lumeColor,
+      emissiveIntensity: 1.1,
+      roughness: 0.14
+    });
+    this.materials.strap = new THREE.MeshStandardMaterial({
+      color: s.strapColor,
+      metalness: 0.12,
+      roughness: 0.68
+    });
+    this.materials.stitch = new THREE.MeshStandardMaterial({
+      color: 0xd8cca8,
+      metalness: 0.05,
+      roughness: 0.85
+    });
+    this.materials.hairspring = new THREE.LineBasicMaterial({
+      color: 0x2255cc,
+      linewidth: 2
+    });
+  }
+
+  createBluedScrew(radius = 0.036, height = 0.022) {
+    const group = new THREE.Group();
+    const head = new THREE.Mesh(new THREE.CylinderGeometry(radius, radius, height, 16), this.materials.bluedScrew);
+    head.rotation.x = Math.PI / 2;
+    group.add(head);
+
+    const slot = new THREE.Mesh(
+      new THREE.BoxGeometry(radius * 1.5, radius * 0.22, height * 0.4),
+      new THREE.MeshBasicMaterial({ color: 0x081024 })
+    );
+    slot.position.z = height * 0.35;
+    group.add(slot);
+    return group;
+  }
+
+  createChatonJewel(chatonRadius = 0.075, jewelRadius = 0.046, height = 0.024) {
+    const group = new THREE.Group();
+    // 18k gold chaton collar
+    const chaton = new THREE.Mesh(
+      new THREE.CylinderGeometry(chatonRadius, chatonRadius * 0.95, height, 20),
+      this.materials.chaton
+    );
+    chaton.rotation.x = Math.PI / 2;
+    group.add(chaton);
+
+    // Synthetic ruby core
+    const ruby = new THREE.Mesh(
+      new THREE.CylinderGeometry(jewelRadius, jewelRadius, height * 1.1, 20),
+      this.materials.jewel
+    );
+    ruby.rotation.x = Math.PI / 2;
+    group.add(ruby);
+
+    // Precision olive-cut pivot hole
+    const pivotHole = new THREE.Mesh(
+      new THREE.CylinderGeometry(jewelRadius * 0.32, jewelRadius * 0.32, height * 1.2, 12),
+      new THREE.MeshBasicMaterial({ color: 0x111111 })
+    );
+    pivotHole.rotation.x = Math.PI / 2;
+    group.add(pivotHole);
+
+    return group;
   }
 
   buildWatch() {
     // Build order: back-to-front, so assembled state looks correct
-    this.buildStrap();       // 1. Leather strap with buckle
-    this.buildOuterCase();   // 2. Case, lugs, crown
-    this.buildMainplate();   // 3. Skeleton mainplate
-    this.buildRotor();       // 4. Rotor (BEHIND mainplate, z=-0.55)
-    this.buildGearTrain();   // 5. Gear train on mainplate
-    this.buildEscapementAndBalance(); // 6. Balance wheel
-    this.buildBridges();     // 7. Micro-bridges
-    this.buildJewels();      // 8. Ruby jewels
-    this.buildDialAndHands(); // 9. Skeleton dial ring + hands
-    this.buildDialFace();    // 10. SOLID opaque dial face (sits above ring, below glass)
-    this.buildBezelAndGlass(); // 11. Bezel + sapphire glass (topmost)
+    this.buildStrap();       // 1. Hand-stitched leather strap + deployant clasp
+    this.buildOuterCase();   // 2. Case, swept chamfer lugs, fluted crown, exhibition back
+    this.buildMainplate();   // 3. Architectural skeleton mainplate
+    this.buildRotor();       // 4. Oscillating rotor (behind mainplate)
+    this.buildGearTrain();   // 5. Kinematic gear train
+    this.buildEscapementAndBalance(); // 6. Balance wheel & escapement
+    this.buildBridges();     // 7. Beveled movement bridges & blued screws
+    this.buildJewels();      // 8. Ruby jewels countersunk in gold chatons
+    this.buildDialAndHands(); // 9. Skeleton dial ring & faceted Dauphine hands
+    this.buildDialFace();    // 10. Solid sunburst dial face
+    this.buildBezelAndGlass(); // 11. Ceramic bezel & physical sapphire glass
 
     // Initial orientation: clean 3/4 front-facing angle
-    // Slight upward tilt so you see the face and the rim depth
     this.group.rotation.set(0.38, -0.22, 0.0);
     this.group.position.set(0, 0, 0);
   }
@@ -143,230 +277,434 @@ export class WatchModel {
   }
 
   // ─────────────────────────────────────────────────────────────────────────
-  // 1. Leather Strap with Pin Buckle
+  // 1. Hand-Stitched Leather Strap & Sculpted Deployant Clasp
   // ─────────────────────────────────────────────────────────────────────────
   buildStrap() {
     const strapGroup = new THREE.Group();
 
-    const makeBand = (yDir, isTop) => {
+    // Padded leather cross-section: flat underside, arched padded top
+    const crossSection = new THREE.Shape();
+    crossSection.moveTo(-0.52, -0.04);
+    crossSection.lineTo(0.52, -0.04);
+    crossSection.quadraticCurveTo(0.36, 0.08, 0, 0.10);
+    crossSection.quadraticCurveTo(-0.36, 0.08, -0.52, -0.04);
+    crossSection.closePath();
+
+    const makePaddedBand = (isTop) => {
+      const bandGroup = new THREE.Group();
       const pts = [];
-      for (let i = 0; i <= 20; i++) {
-        const t = i / 20;
-        const y = yDir * (1.35 + t * (isTop ? 1.6 : 1.0));
-        const z = -0.05 - Math.sin(t * Math.PI * 0.45) * 0.55;
+      const steps = 24;
+      const yDir = isTop ? 1 : -1;
+      const length = isTop ? 1.15 : 0.95;
+
+      for (let i = 0; i <= steps; i++) {
+        const t = i / steps;
+        // Ergonomic oval curvature wrapping gracefully around display stand/wrist
+        const y = yDir * (1.35 + Math.sin(t * Math.PI * 0.48) * length);
+        const z = -0.06 - (1 - Math.cos(t * Math.PI * 0.48)) * 1.25;
         pts.push(new THREE.Vector3(0, y, z));
       }
+
       const curve = new THREE.CatmullRomCurve3(pts);
-      const geo = new THREE.TubeGeometry(curve, 20, 0.42, 12, false);
-      const mesh = new THREE.Mesh(geo, this.materials.strap);
-      mesh.scale.set(1.35, 1, 0.28);
-      return mesh;
+      const geo = new THREE.ExtrudeGeometry(crossSection, {
+        extrudePath: curve,
+        steps: steps,
+        bevelEnabled: false
+      });
+      const bandMesh = new THREE.Mesh(geo, this.materials.strap);
+      bandMesh.castShadow = true;
+      bandMesh.receiveShadow = true;
+      bandGroup.add(bandMesh);
+
+      // Contrast saddle stitch lines running down both perimeter edges
+      [-0.44, 0.44].forEach(xOffset => {
+        const stitchPts = pts.map(p => new THREE.Vector3(xOffset, p.y, p.z + 0.05));
+        const stitchCurve = new THREE.CatmullRomCurve3(stitchPts);
+        const stitchGeo = new THREE.TubeGeometry(stitchCurve, steps * 2, 0.012, 6, false);
+        const stitchMesh = new THREE.Mesh(stitchGeo, this.materials.stitch);
+        bandGroup.add(stitchMesh);
+      });
+
+      return { group: bandGroup, endPt: pts[pts.length - 1] };
     };
 
-    strapGroup.add(makeBand(1, true));   // top band
-    strapGroup.add(makeBand(-1, false)); // bottom band (shorter — has buckle)
+    const topBand = makePaddedBand(true);
+    const bottomBand = makePaddedBand(false);
+    strapGroup.add(topBand.group);
+    strapGroup.add(bottomBand.group);
 
-    // ── Pin Buckle at the bottom end ──
-    const buckleGroup = new THREE.Group();
+    // Bottom strap keeper loops (fixed & floating)
+    [-1.65, -1.95].forEach(yPos => {
+      const keeperGeo = new THREE.TorusGeometry(0.54, 0.032, 12, 32);
+      const keeperMesh = new THREE.Mesh(keeperGeo, this.materials.strap);
+      keeperMesh.scale.set(1.0, 0.28, 1.0);
+      keeperMesh.rotation.x = Math.PI / 2;
+      keeperMesh.position.set(0, yPos, -0.32);
+      strapGroup.add(keeperMesh);
+    });
 
-    // Outer rectangular frame
-    const frameShape = new THREE.Shape();
-    frameShape.moveTo(-0.5, -0.12);
-    frameShape.lineTo(0.5, -0.12);
-    frameShape.lineTo(0.5, 0.12);
-    frameShape.lineTo(-0.5, 0.12);
-    frameShape.closePath();
-    // Cut out inner opening
-    const frameHole = new THREE.Path();
-    frameHole.moveTo(-0.36, -0.07);
-    frameHole.lineTo(0.36, -0.07);
-    frameHole.lineTo(0.36, 0.07);
-    frameHole.lineTo(-0.36, 0.07);
-    frameHole.closePath();
-    frameShape.holes.push(frameHole);
+    // ── Sculpted Butterfly Deployant Clasp ──
+    const claspGroup = new THREE.Group();
 
-    const frameGeo = new THREE.ExtrudeGeometry(frameShape, { depth: 0.06, bevelEnabled: true, bevelThickness: 0.01, bevelSize: 0.01 });
-    const frameMesh = new THREE.Mesh(frameGeo, this.materials.case);
-    frameMesh.rotation.x = Math.PI / 2;
-    buckleGroup.add(frameMesh);
+    // Outer clasp cover plate with beveled edges
+    const claspShape = new THREE.Shape();
+    claspShape.moveTo(-0.46, -0.14);
+    claspShape.lineTo(0.46, -0.14);
+    claspShape.lineTo(0.46, 0.14);
+    claspShape.lineTo(-0.46, 0.14);
+    claspShape.closePath();
 
-    // Center pin bar
-    const pinGeo = new THREE.CylinderGeometry(0.025, 0.025, 0.95, 12);
-    const pinMesh = new THREE.Mesh(pinGeo, this.materials.case);
-    pinMesh.rotation.z = Math.PI / 2;
-    buckleGroup.add(pinMesh);
+    const claspGeo = new THREE.ExtrudeGeometry(claspShape, {
+      depth: 0.07,
+      bevelEnabled: true,
+      bevelThickness: 0.018,
+      bevelSize: 0.018
+    });
+    const claspCover = new THREE.Mesh(claspGeo, this.materials.case);
+    claspCover.rotation.x = Math.PI / 2;
+    claspGroup.add(claspCover);
 
-    // Position buckle at tail end of bottom strap
-    buckleGroup.position.set(0, -2.65, -0.32);
-    strapGroup.add(buckleGroup);
+    // Horologia signature emblem ridge on clasp
+    const emblemRidge = new THREE.Mesh(
+      new THREE.BoxGeometry(0.24, 0.02, 0.01),
+      this.materials.bezel
+    );
+    emblemRidge.position.set(0, 0.045, 0);
+    claspGroup.add(emblemRidge);
+
+    // Dual push-button release triggers (left and right)
+    [-0.50, 0.50].forEach(x => {
+      const trigger = new THREE.Mesh(
+        new THREE.BoxGeometry(0.06, 0.03, 0.10),
+        this.materials.case
+      );
+      trigger.position.set(x, 0, 0);
+      claspGroup.add(trigger);
+    });
+
+    // Deployant bridge arms
+    const armGeo = new THREE.CylinderGeometry(0.025, 0.025, 0.88, 12);
+    const armMesh = new THREE.Mesh(armGeo, this.materials.case);
+    armMesh.rotation.z = Math.PI / 2;
+    armMesh.position.set(0, -0.04, 0);
+    claspGroup.add(armMesh);
+
+    claspGroup.position.copy(bottomBand.endPt);
+    strapGroup.add(claspGroup);
 
     this.registerPart('strap', strapGroup, WATCH_PARTS.STRAP);
   }
 
   // ─────────────────────────────────────────────────────────────────────────
-  // 2. Outer Case, Lugs, Crown
+  // 2. Haute Horlogerie Case, Swept Chamfer Lugs, Fluted Crown
   // ─────────────────────────────────────────────────────────────────────────
   buildOuterCase() {
     const caseGroup = new THREE.Group();
 
-    // Case barrel (needs rotation to be a vertical ring, not a flat disk!)
-    const caseGeo = new THREE.CylinderGeometry(1.45, 1.45, 0.42, 64, 1, true);
+    // Main 41mm Case Barrel (brushed flank with polished stepped bezel seat)
+    const caseGeo = new THREE.CylinderGeometry(1.45, 1.45, 0.44, 64, 1, true);
     const caseMesh = new THREE.Mesh(caseGeo, this.materials.case);
     caseMesh.rotation.x = Math.PI / 2;
+    caseMesh.castShadow = true;
+    caseMesh.receiveShadow = true;
     caseGroup.add(caseMesh);
 
-    // Case back ring
-    const backRing = new THREE.Mesh(new THREE.TorusGeometry(1.42, 0.06, 16, 64), this.materials.case);
-    backRing.position.z = -0.26; // Pushed back to make room for rotor
+    // Polished stepped bezel collar
+    const stepCollar = new THREE.Mesh(
+      new THREE.CylinderGeometry(1.47, 1.45, 0.06, 64),
+      this.materials.case
+    );
+    stepCollar.rotation.x = Math.PI / 2;
+    stepCollar.position.z = 0.12;
+    caseGroup.add(stepCollar);
+
+    // Exhibition case back ring (recessed behind mainplate)
+    const backRing = new THREE.Mesh(
+      new THREE.TorusGeometry(1.42, 0.06, 16, 64),
+      this.materials.case
+    );
+    backRing.position.z = -0.26;
     caseGroup.add(backRing);
 
+    // Exhibition sapphire crystal display caseback
+    const exhibitionGlass = new THREE.Mesh(
+      new THREE.CylinderGeometry(1.26, 1.26, 0.02, 48),
+      this.materials.glass
+    );
+    exhibitionGlass.rotation.x = Math.PI / 2;
+    exhibitionGlass.position.z = -0.27;
+    caseGroup.add(exhibitionGlass);
 
-    // Crown (winding stem)
+    // ── 4 Ergonomically Swept Lugs with Beveled Chamfers ──
+    const makeLug = (isRight, isTop) => {
+      const lugShape = new THREE.Shape();
+      lugShape.moveTo(-0.16, 0);
+      lugShape.lineTo(0.16, 0);
+      lugShape.quadraticCurveTo(0.14, 0.32, 0.09, 0.65);
+      lugShape.lineTo(-0.09, 0.65);
+      lugShape.quadraticCurveTo(-0.14, 0.32, -0.16, 0);
+      lugShape.closePath();
 
-    // Lugs — 4 elegant curved extensions (re-positioned to perfectly intersect r=1.45 case barrel)
-    [[-0.8, 1.15], [0.8, 1.15], [-0.8, -1.15], [0.8, -1.15]].forEach(([lx, ly]) => {
-      const shape = new THREE.Shape();
-      shape.moveTo(-0.14, 0);
-      shape.lineTo(0.14, 0);
-      shape.quadraticCurveTo(0.12, 0.28, 0.08, 0.58);
-      shape.lineTo(-0.08, 0.58);
-      shape.quadraticCurveTo(-0.12, 0.28, -0.14, 0);
-      shape.closePath();
+      const lugGeo = new THREE.ExtrudeGeometry(lugShape, {
+        depth: 0.24,
+        bevelEnabled: true,
+        bevelThickness: 0.035,
+        bevelSize: 0.035
+      });
+      const lugMesh = new THREE.Mesh(lugGeo, this.materials.case);
+      lugMesh.castShadow = true;
 
-      const geo = new THREE.ExtrudeGeometry(shape, { depth: 0.22, bevelEnabled: true, bevelThickness: 0.025, bevelSize: 0.025 });
-      const lug = new THREE.Mesh(geo, this.materials.case);
-      const isTop = ly > 0;
-      lug.position.set(lx, ly, -0.11);
-      
-      // Correct Euler rotation (Z applied first, then X)
+      const lx = (isRight ? 1 : -1) * 0.82;
+      const ly = (isTop ? 1 : -1) * 1.15;
+      lugMesh.position.set(lx, ly, -0.12);
+
       if (isTop) {
-        // Top lugs point up. To tilt backwards (inward), X rotation must be negative.
-        lug.rotation.x = -0.38;
-        lug.rotation.z = lx > 0 ? -0.12 : 0.12;
+        lugMesh.rotation.x = -0.38;
+        lugMesh.rotation.z = isRight ? -0.12 : 0.12;
       } else {
-        // Bottom lugs point down (Z rotated by PI). To tilt backwards (inward), X rotation must be positive.
-        lug.rotation.x = 0.38;
-        lug.rotation.z = lx > 0 ? (Math.PI + 0.12) : (Math.PI - 0.12);
+        lugMesh.rotation.x = 0.38;
+        lugMesh.rotation.z = isRight ? (Math.PI + 0.12) : (Math.PI - 0.12);
       }
-      
-      caseGroup.add(lug);
-    });
 
-    // Crown (winding stem)
+      // Spring-bar screw accent on outer lug flank
+      const screwPin = this.createBluedScrew(0.024, 0.015);
+      screwPin.position.set(isRight ? 0.16 : -0.16, 0.42, 0.12);
+      screwPin.rotation.y = isRight ? Math.PI / 2 : -Math.PI / 2;
+      lugMesh.add(screwPin);
+
+      return lugMesh;
+    };
+
+    caseGroup.add(makeLug(false, true));  // Top-left
+    caseGroup.add(makeLug(true, true));   // Top-right
+    caseGroup.add(makeLug(false, false)); // Bottom-left
+    caseGroup.add(makeLug(true, false));  // Bottom-right
+
+    // ── Knurled Winding Crown at 3 o'clock ──
     const crownGroup = new THREE.Group();
-    const crownGeo = new THREE.CylinderGeometry(0.22, 0.20, 0.32, 32);
-    const crownMesh = new THREE.Mesh(crownGeo, this.materials.case);
-    crownMesh.rotation.z = Math.PI / 2;
-    crownGroup.add(crownMesh);
-    // Crown grooves (decorative rings)
-    for (let i = 0; i < 5; i++) {
-      const grooveGeo = new THREE.TorusGeometry(0.21, 0.018, 8, 32);
-      const grooveMesh = new THREE.Mesh(grooveGeo, this.materials.bezel);
-      grooveMesh.rotation.y = Math.PI / 2;
-      grooveMesh.position.x = -0.08 + i * 0.04;
-      crownGroup.add(grooveMesh);
+    const crownBody = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.22, 0.20, 0.26, 32),
+      this.materials.case
+    );
+    crownBody.rotation.z = Math.PI / 2;
+    crownGroup.add(crownBody);
+
+    // 24 fluted grip teeth
+    for (let i = 0; i < 24; i++) {
+      const angle = (i / 24) * Math.PI * 2;
+      const fluting = new THREE.Mesh(
+        new THREE.BoxGeometry(0.24, 0.015, 0.022),
+        this.materials.bezel
+      );
+      fluting.position.set(0, Math.cos(angle) * 0.21, Math.sin(angle) * 0.21);
+      crownGroup.add(fluting);
     }
-    crownGroup.position.set(1.6, 0, 0);
+
+    // Polished Horologia cabochon emblem cap
+    const cabochon = new THREE.Mesh(
+      new THREE.SphereGeometry(0.18, 20, 10, 0, Math.PI * 2, 0, Math.PI * 0.4),
+      this.materials.bezel
+    );
+    cabochon.rotation.z = -Math.PI / 2;
+    cabochon.position.set(0.13, 0, 0);
+    crownGroup.add(cabochon);
+
+    crownGroup.position.set(1.60, 0, 0);
     caseGroup.add(crownGroup);
 
     this.registerPart('outerCase', caseGroup, WATCH_PARTS.CASE);
   }
 
   // ─────────────────────────────────────────────────────────────────────────
-  // 3. Skeleton Mainplate
+  // 3. Skeleton Mainplate with Anglage Chamfers
   // ─────────────────────────────────────────────────────────────────────────
   buildMainplate() {
     const plateGroup = new THREE.Group();
     const plateShape = new THREE.Shape();
     plateShape.absarc(0, 0, 1.35, 0, Math.PI * 2, false);
-    const h1 = new THREE.Path(); h1.absarc(-0.4, 0.35, 0.45, 0, Math.PI * 2, true);
-    const h2 = new THREE.Path(); h2.absarc(0.45, -0.3, 0.4, 0, Math.PI * 2, true);
-    plateShape.holes.push(h1, h2);
-    const geo = new THREE.ExtrudeGeometry(plateShape, { depth: 0.06, bevelEnabled: true, bevelThickness: 0.015, bevelSize: 0.015 });
+
+    // Non-intersecting skeleton apertures for clean Earcut triangulation
+    const hBalance = new THREE.Path();
+    hBalance.absarc(-0.35, 0.30, 0.30, 0, Math.PI * 2, true);
+    const hBarrel = new THREE.Path();
+    hBarrel.absarc(-0.42, -0.35, 0.28, 0, Math.PI * 2, true);
+    const hTrain = new THREE.Path();
+    hTrain.absarc(0.35, 0.15, 0.26, 0, Math.PI * 2, true);
+    const hEscapement = new THREE.Path();
+    hEscapement.absarc(0.08, 0.55, 0.14, 0, Math.PI * 2, true);
+
+    plateShape.holes.push(hBalance, hBarrel, hTrain, hEscapement);
+
+    const geo = new THREE.ExtrudeGeometry(plateShape, {
+      depth: 0.06,
+      bevelEnabled: true,
+      bevelThickness: 0.015,
+      bevelSize: 0.015
+    });
     const plateMesh = new THREE.Mesh(geo, this.materials.plate);
     plateMesh.position.z = -0.18;
+    plateMesh.castShadow = true;
+    plateMesh.receiveShadow = true;
     plateGroup.add(plateMesh);
+
+    // Decorative circular perlage graining ring on mainplate rim
+    const perlageRing = new THREE.Mesh(
+      new THREE.RingGeometry(1.22, 1.32, 48),
+      new THREE.MeshStandardMaterial({
+        color: 0x9fa8b6,
+        metalness: 0.92,
+        roughness: 0.28,
+        side: THREE.DoubleSide
+      })
+    );
+    perlageRing.position.z = -0.119;
+    plateGroup.add(perlageRing);
+
     this.registerPart('mainplate', plateGroup, WATCH_PARTS.MAINPLATE);
   }
 
   // ─────────────────────────────────────────────────────────────────────────
-  // 4. Automatic Winding Rotor
-  // Radius 0.88 — stays within case barrel at any tilt angle
-  // z = -0.72 — fully behind mainplate, never visible from front
+  // 4. Automatic Winding Rotor with Heavy 22k Segment
   // ─────────────────────────────────────────────────────────────────────────
   buildRotor() {
     const rotorGroup = new THREE.Group();
 
+    // Semi-circular oscillating rotor frame
     const shape = new THREE.Shape();
     shape.absarc(0, 0, 0.88, 0, Math.PI, false);
     const rh = new THREE.Path();
-    rh.absarc(0, 0, 0.30, 0, Math.PI, true);
+    rh.absarc(0, 0, 0.28, 0, Math.PI, true);
     shape.holes.push(rh);
 
-    const geo = new THREE.ExtrudeGeometry(shape, { depth: 0.07, bevelEnabled: true, bevelThickness: 0.012, bevelSize: 0.012 });
-    const rotorMesh = new THREE.Mesh(geo, this.materials.gear);
-    rotorMesh.position.z = -0.08;
+    const geo = new THREE.ExtrudeGeometry(shape, {
+      depth: 0.06,
+      bevelEnabled: true,
+      bevelThickness: 0.012,
+      bevelSize: 0.012
+    });
+    const rotorMesh = new THREE.Mesh(geo, this.materials.plate);
+    rotorMesh.position.z = -0.07;
     rotorGroup.add(rotorMesh);
 
+    // 22k Solid Gold Heavy Outer Segment
     const weightShape = new THREE.Shape();
-    weightShape.absarc(0, 0, 0.85, 0, Math.PI * 0.65, false);
-    weightShape.absarc(0, 0, 0.66, Math.PI * 0.65, 0, true);
+    weightShape.absarc(0, 0, 0.86, 0, Math.PI, false);
+    weightShape.absarc(0, 0, 0.68, Math.PI, 0, true);
     weightShape.closePath();
-    const weightGeo = new THREE.ExtrudeGeometry(weightShape, { depth: 0.09, bevelEnabled: false });
-    const weightMat = new THREE.MeshStandardMaterial({ color: 0x2a2a2a, metalness: 0.98, roughness: 0.05 });
-    const weightMesh = new THREE.Mesh(weightGeo, weightMat);
-    weightMesh.position.z = -0.06;
+
+    const weightGeo = new THREE.ExtrudeGeometry(weightShape, {
+      depth: 0.08,
+      bevelEnabled: true,
+      bevelThickness: 0.01,
+      bevelSize: 0.01
+    });
+    const weightMesh = new THREE.Mesh(weightGeo, this.materials.gear);
+    weightMesh.position.z = -0.055;
     rotorGroup.add(weightMesh);
 
-    const hub = new THREE.Mesh(new THREE.CylinderGeometry(0.20, 0.20, 0.08, 32), this.materials.case);
+    // Central ball bearing race with 7 micro ceramic bearings
+    const hub = new THREE.Mesh(new THREE.CylinderGeometry(0.20, 0.20, 0.07, 32), this.materials.case);
     hub.rotation.x = Math.PI / 2;
-    hub.position.z = -0.06;
+    hub.position.z = -0.05;
     rotorGroup.add(hub);
 
-    rotorGroup.position.z = -0.23; // Tucked right inside the case back ring, safely behind mainplate
+    for (let i = 0; i < 7; i++) {
+      const angle = (i / 7) * Math.PI * 2;
+      const ball = new THREE.Mesh(
+        new THREE.SphereGeometry(0.022, 12, 12),
+        new THREE.MeshStandardMaterial({ color: 0xffffff, metalness: 0.1, roughness: 0.05 })
+      );
+      ball.position.set(Math.cos(angle) * 0.13, Math.sin(angle) * 0.13, -0.05);
+      rotorGroup.add(ball);
+    }
+
+    rotorGroup.position.z = -0.23;
     this.registerPart('rotor', rotorGroup, WATCH_PARTS.ROTOR);
   }
 
   // ─────────────────────────────────────────────────────────────────────────
-  // 5. Gear Train
+  // 5. Kinematic Gear Train with Spoked Wheels
   // ─────────────────────────────────────────────────────────────────────────
   buildGearTrain() {
     const gearGroup = new THREE.Group();
 
-    const createGear = (radius, teeth, thickness = 0.035) => {
+    const createSpokedGear = (radius, teeth, thickness = 0.035, spokeCount = 5) => {
+      const gearMeshGroup = new THREE.Group();
+
+      // Outer toothed rim
       const gearShape = new THREE.Shape();
-      const outer = radius, inner = radius * 0.85;
+      const outer = radius;
+      const inner = radius * 0.86;
       for (let i = 0; i < teeth; i++) {
-        const a1 = (i / teeth) * Math.PI * 2, a2 = ((i + 0.3) / teeth) * Math.PI * 2;
-        const a3 = ((i + 0.6) / teeth) * Math.PI * 2, a4 = ((i + 0.9) / teeth) * Math.PI * 2;
+        const a1 = (i / teeth) * Math.PI * 2;
+        const a2 = ((i + 0.3) / teeth) * Math.PI * 2;
+        const a3 = ((i + 0.6) / teeth) * Math.PI * 2;
+        const a4 = ((i + 0.9) / teeth) * Math.PI * 2;
         if (i === 0) gearShape.moveTo(Math.cos(a1) * inner, Math.sin(a1) * inner);
         gearShape.lineTo(Math.cos(a2) * outer, Math.sin(a2) * outer);
         gearShape.lineTo(Math.cos(a3) * outer, Math.sin(a3) * outer);
         gearShape.lineTo(Math.cos(a4) * inner, Math.sin(a4) * inner);
       }
       const hole = new THREE.Path();
-      hole.absarc(0, 0, radius * 0.3, 0, Math.PI * 2, true);
+      hole.absarc(0, 0, inner * 0.88, 0, Math.PI * 2, true);
       gearShape.holes.push(hole);
-      return new THREE.Mesh(new THREE.ExtrudeGeometry(gearShape, { depth: thickness, bevelEnabled: false }), this.materials.gear);
+
+      const rimMesh = new THREE.Mesh(
+        new THREE.ExtrudeGeometry(gearShape, { depth: thickness, bevelEnabled: false }),
+        this.materials.gear
+      );
+      gearMeshGroup.add(rimMesh);
+
+      // Center arbor hub
+      const hubMesh = new THREE.Mesh(
+        new THREE.CylinderGeometry(radius * 0.22, radius * 0.22, thickness * 1.3, 16),
+        this.materials.gear
+      );
+      hubMesh.rotation.x = Math.PI / 2;
+      hubMesh.position.z = thickness * 0.5;
+      gearMeshGroup.add(hubMesh);
+
+      // Crossed spokes
+      for (let s = 0; s < spokeCount; s++) {
+        const spokeAngle = (s / spokeCount) * Math.PI * 2;
+        const spoke = new THREE.Mesh(
+          new THREE.BoxGeometry(inner * 0.82, radius * 0.05, thickness * 0.85),
+          this.materials.gear
+        );
+        spoke.rotation.z = spokeAngle;
+        spoke.position.set(
+          Math.cos(spokeAngle) * (inner * 0.41),
+          Math.sin(spokeAngle) * (inner * 0.41),
+          thickness * 0.5
+        );
+        gearMeshGroup.add(spoke);
+      }
+
+      return gearMeshGroup;
     };
 
-    this.mainspringGear = createGear(0.48, 28, 0.05);
+    // 1. Mainspring Barrel Gear (28 teeth)
+    this.mainspringGear = createSpokedGear(0.48, 28, 0.05, 5);
     this.mainspringGear.position.set(-0.42, -0.35, -0.09);
     gearGroup.add(this.mainspringGear);
 
-    this.centerGear = createGear(0.36, 20, 0.035);
+    // 2. Center Wheel (20 teeth)
+    this.centerGear = createSpokedGear(0.36, 20, 0.035, 5);
     this.centerGear.position.set(0, 0, -0.07);
     gearGroup.add(this.centerGear);
 
-    this.thirdGear = createGear(0.28, 16, 0.035);
+    // 3. Third Wheel (16 teeth)
+    this.thirdGear = createSpokedGear(0.28, 16, 0.035, 4);
     this.thirdGear.position.set(0.32, 0.28, -0.05);
     gearGroup.add(this.thirdGear);
 
-    this.fourthGear = createGear(0.22, 14, 0.035);
+    // 4. Fourth Wheel (14 teeth)
+    this.fourthGear = createSpokedGear(0.22, 14, 0.035, 4);
     this.fourthGear.position.set(-0.28, 0.42, -0.04);
     gearGroup.add(this.fourthGear);
 
-    this.escapeGear = createGear(0.16, 12, 0.035);
+    // 5. Escape Wheel (12 ratchet-form teeth)
+    this.escapeGear = createSpokedGear(0.16, 12, 0.035, 3);
     this.escapeGear.position.set(0.1, 0.6, -0.03);
     gearGroup.add(this.escapeGear);
 
@@ -374,149 +712,328 @@ export class WatchModel {
   }
 
   // ─────────────────────────────────────────────────────────────────────────
-  // 6. Balance Wheel & Escapement
+  // 6. Balance Wheel & Swiss Lever Escapement
   // ─────────────────────────────────────────────────────────────────────────
   buildEscapementAndBalance() {
     const escGroup = new THREE.Group();
+
+    // Variable Inertia Glucydur Balance Wheel
     const balShape = new THREE.Shape();
     balShape.absarc(0, 0, 0.35, 0, Math.PI * 2, false);
-    const bh = new THREE.Path(); bh.absarc(0, 0, 0.28, 0, Math.PI * 2, true);
+    const bh = new THREE.Path();
+    bh.absarc(0, 0, 0.28, 0, Math.PI * 2, true);
     balShape.holes.push(bh);
-    this.balanceWheelMesh = new THREE.Mesh(new THREE.ExtrudeGeometry(balShape, { depth: 0.03, bevelEnabled: false }), this.materials.gear);
-    this.balanceWheelMesh.add(new THREE.Mesh(new THREE.BoxGeometry(0.65, 0.04, 0.03), this.materials.gear));
 
+    this.balanceWheelMesh = new THREE.Mesh(
+      new THREE.ExtrudeGeometry(balShape, { depth: 0.03, bevelEnabled: false }),
+      this.materials.gear
+    );
+    // Crossed diameter spokes
+    this.balanceWheelMesh.add(new THREE.Mesh(new THREE.BoxGeometry(0.66, 0.035, 0.028), this.materials.gear));
+
+    // 4 Gold poising micro-screws along the rim
     for (let i = 0; i < 4; i++) {
       const angle = (i / 4) * Math.PI * 2;
-      const screw = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 0.04, 8), this.materials.lume);
+      const screw = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.022, 0.035, 8), this.materials.chaton);
       screw.position.set(Math.cos(angle) * 0.32, Math.sin(angle) * 0.32, 0.015);
       this.balanceWheelMesh.add(screw);
     }
 
+    // Coiled Nivarox Flat Hairspring (Archimedean spiral)
     const curvePoints = [];
-    for (let i = 0; i < 100; i++) {
-      const t = i / 100, a = t * Math.PI * 2 * 3.5, r = 0.05 + t * 0.2;
+    for (let i = 0; i < 110; i++) {
+      const t = i / 110;
+      const a = t * Math.PI * 2 * 3.6;
+      const r = 0.05 + t * 0.20;
       curvePoints.push(new THREE.Vector3(Math.cos(a) * r, Math.sin(a) * r, 0.02));
     }
-    this.balanceWheelMesh.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(curvePoints), this.materials.hairspring));
-    this.balanceWheelMesh.position.set(-0.35, 0.3, 0.08);
+    this.balanceWheelMesh.add(new THREE.Line(
+      new THREE.BufferGeometry().setFromPoints(curvePoints),
+      this.materials.hairspring
+    ));
+
+    // Positioned safely within movement: z = 0.04
+    this.balanceWheelMesh.position.set(-0.35, 0.3, 0.04);
     escGroup.add(this.balanceWheelMesh);
 
+    // Swiss Lever Pallet Fork & Ruby Pallets
     const pf = new THREE.Group();
     pf.add(new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.04, 0.025), this.materials.escapement));
-    const rg = new THREE.BoxGeometry(0.04, 0.04, 0.04);
-    const r1 = new THREE.Mesh(rg, this.materials.jewel); r1.position.set(-0.08, 0.03, 0);
-    const r2 = new THREE.Mesh(rg, this.materials.jewel); r2.position.set(0.08, 0.03, 0);
+
+    const palletJewelGeo = new THREE.BoxGeometry(0.035, 0.035, 0.035);
+    const r1 = new THREE.Mesh(palletJewelGeo, this.materials.jewel);
+    r1.position.set(-0.08, 0.03, 0);
+    const r2 = new THREE.Mesh(palletJewelGeo, this.materials.jewel);
+    r2.position.set(0.08, 0.03, 0);
     pf.add(r1, r2);
-    pf.position.set(-0.14, 0.52, 0.06);
+
+    pf.position.set(-0.14, 0.52, 0.02);
     escGroup.add(pf);
 
     this.registerPart('balanceWheel', escGroup, WATCH_PARTS.BALANCE_WHEEL);
   }
 
   // ─────────────────────────────────────────────────────────────────────────
-  // 7. Skeleton Micro-Bridges
+  // 7. Architectural Skeleton Movement Bridges & Blued Screws
   // ─────────────────────────────────────────────────────────────────────────
   buildBridges() {
     const bridgeGroup = new THREE.Group();
-    const makeBridge = (points, zPos) => {
-      const shape = new THREE.Shape();
-      shape.moveTo(...points[0]);
-      points.slice(1).forEach(p => shape.lineTo(...p));
-      shape.closePath();
-      const mesh = new THREE.Mesh(new THREE.ExtrudeGeometry(shape, { depth: 0.03, bevelEnabled: true, bevelThickness: 0.01, bevelSize: 0.01 }), this.materials.plate);
-      mesh.position.z = zPos;
-      return mesh;
-    };
-    bridgeGroup.add(makeBridge([[-0.6, 0.45], [-0.15, 0.45], [-0.25, 0.15], [-0.6, 0.25]], -0.12));
-    bridgeGroup.add(makeBridge([[0.15, -0.45], [0.55, -0.2], [0.45, -0.5]], -0.12));
 
-    const screwMat = new THREE.MeshStandardMaterial({ color: 0x1e90ff, metalness: 0.9, roughness: 0.1 });
-    [[-0.5, 0.35], [0.45, -0.35]].forEach(([sx, sy]) => {
-      const s = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 0.03, 16), screwMat);
-      s.rotation.x = Math.PI / 2;
-      s.position.set(sx, sy, -0.09);
-      bridgeGroup.add(s);
+    // 1. Sculpted Barrel Bridge (arched profile framing mainspring barrel)
+    const barrelShape = new THREE.Shape();
+    barrelShape.moveTo(-0.68, -0.14);
+    barrelShape.quadraticCurveTo(-0.45, -0.09, -0.18, -0.15);
+    barrelShape.lineTo(-0.24, -0.52);
+    barrelShape.quadraticCurveTo(-0.48, -0.58, -0.68, -0.48);
+    barrelShape.closePath();
+
+    const barrelBridge = new THREE.Mesh(
+      new THREE.ExtrudeGeometry(barrelShape, {
+        depth: 0.032,
+        bevelEnabled: true,
+        bevelThickness: 0.012,
+        bevelSize: 0.012
+      }),
+      this.materials.plate
+    );
+    barrelBridge.position.z = -0.12;
+    barrelBridge.castShadow = true;
+    barrelBridge.receiveShadow = true;
+    bridgeGroup.add(barrelBridge);
+
+    // 2. Sculpted Train Bridge (flowing finger bridge spanning center & third wheel)
+    const trainShape = new THREE.Shape();
+    trainShape.moveTo(0.12, 0.08);
+    trainShape.quadraticCurveTo(0.36, 0.12, 0.56, 0.16);
+    trainShape.quadraticCurveTo(0.50, 0.35, 0.44, 0.48);
+    trainShape.quadraticCurveTo(0.24, 0.38, 0.14, 0.40);
+    trainShape.closePath();
+
+    const trainBridge = new THREE.Mesh(
+      new THREE.ExtrudeGeometry(trainShape, {
+        depth: 0.032,
+        bevelEnabled: true,
+        bevelThickness: 0.012,
+        bevelSize: 0.012
+      }),
+      this.materials.plate
+    );
+    trainBridge.position.z = -0.08;
+    trainBridge.castShadow = true;
+    trainBridge.receiveShadow = true;
+    bridgeGroup.add(trainBridge);
+
+    // 3. Cantilevered Balance Cock (graceful arm arching over the balance wheel)
+    const cockShape = new THREE.Shape();
+    cockShape.moveTo(-0.68, 0.46);
+    cockShape.quadraticCurveTo(-0.48, 0.48, -0.28, 0.38);
+    cockShape.quadraticCurveTo(-0.25, 0.26, -0.36, 0.22);
+    cockShape.quadraticCurveTo(-0.52, 0.24, -0.68, 0.22);
+    cockShape.closePath();
+
+    const balanceCock = new THREE.Mesh(
+      new THREE.ExtrudeGeometry(cockShape, {
+        depth: 0.032,
+        bevelEnabled: true,
+        bevelThickness: 0.012,
+        bevelSize: 0.012
+      }),
+      this.materials.plate
+    );
+    balanceCock.position.z = 0.02;
+    balanceCock.castShadow = true;
+    balanceCock.receiveShadow = true;
+    bridgeGroup.add(balanceCock);
+
+    // Incabloc shock-protection setting spring on balance cock
+    const incabloc = new THREE.Mesh(
+      new THREE.TorusGeometry(0.065, 0.014, 8, 24),
+      this.materials.chaton
+    );
+    incabloc.position.set(-0.35, 0.30, 0.055);
+    bridgeGroup.add(incabloc);
+
+    // 4 Blued Steel Screws securing bridges
+    [
+      [-0.52, -0.22, -0.09],
+      [-0.35, -0.48, -0.09],
+      [0.44, 0.35, -0.05],
+      [-0.52, 0.38, 0.05]
+    ].forEach(([sx, sy, sz]) => {
+      const screw = this.createBluedScrew(0.034, 0.022);
+      screw.position.set(sx, sy, sz);
+      bridgeGroup.add(screw);
     });
 
     this.registerPart('bridges', bridgeGroup, WATCH_PARTS.BRIDGES);
   }
 
   // ─────────────────────────────────────────────────────────────────────────
-  // 8. Ruby Jewel Bearings
+  // 8. Ruby Jewel Bearings Countersunk in 18k Gold Chatons
+  // NO JEWELS POKE THROUGH DIAL (Zombie Red Pimple permanently eradicated)
   // ─────────────────────────────────────────────────────────────────────────
   buildJewels() {
     const jewelGroup = new THREE.Group();
-    const geo = new THREE.CylinderGeometry(0.065, 0.065, 0.035, 16);
-    [[0, 0, -0.03], [-0.42, -0.35, -0.05], [0.32, 0.28, -0.02], [-0.28, 0.42, 0.01], [-0.35, 0.3, 0.15], [0.1, 0.6, 0.03]].forEach(([jx, jy, jz]) => {
-      const j = new THREE.Mesh(geo, this.materials.jewel);
-      j.rotation.x = Math.PI / 2;
-      j.position.set(jx, jy, jz);
-      jewelGroup.add(j);
+
+    // 6 Movement Pivot Jewels seated within movement depth (-0.06 <= z <= 0.06)
+    const jewelCoordinates = [
+      [0, 0, -0.05],          // Center wheel arbor
+      [-0.42, -0.35, -0.06],  // Mainspring barrel arbor
+      [0.32, 0.28, -0.03],    // Third wheel arbor
+      [-0.28, 0.42, -0.02],   // Fourth wheel arbor
+      [0.10, 0.60, 0.00],     // Escape wheel arbor
+      [-0.35, 0.30, 0.058],   // Balance staff upper jewel (inside Incabloc chaton, z < 0.07!)
+    ];
+
+    jewelCoordinates.forEach(([jx, jy, jz]) => {
+      const chatonJewel = this.createChatonJewel(0.072, 0.046, 0.024);
+      chatonJewel.position.set(jx, jy, jz);
+      jewelGroup.add(chatonJewel);
+
+      // Pair of micro blued retention screws flanking each chaton
+      const s1 = this.createBluedScrew(0.018, 0.014);
+      s1.position.set(jx - 0.08, jy, jz);
+      const s2 = this.createBluedScrew(0.018, 0.014);
+      s2.position.set(jx + 0.08, jy, jz);
+      jewelGroup.add(s1, s2);
     });
+
     this.registerPart('jewels', jewelGroup, WATCH_PARTS.JEWELS);
   }
 
   // ─────────────────────────────────────────────────────────────────────────
-  // 9. Skeleton Dial Ring & Hands
+  // 9. Skeleton Dial Ring & Faceted Dauphine Hands
   // ─────────────────────────────────────────────────────────────────────────
   buildDialAndHands() {
     const dialGroup = new THREE.Group();
+
+    // Outer Dial Chapter Ring
     const ringShape = new THREE.Shape();
     ringShape.absarc(0, 0, 1.35, 0, Math.PI * 2, false);
-    const rh = new THREE.Path(); rh.absarc(0, 0, 1.05, 0, Math.PI * 2, true);
+    const rh = new THREE.Path();
+    rh.absarc(0, 0, 1.05, 0, Math.PI * 2, true);
     ringShape.holes.push(rh);
-    const dialRing = new THREE.Mesh(new THREE.ExtrudeGeometry(ringShape, { depth: 0.03, bevelEnabled: true, bevelThickness: 0.008, bevelSize: 0.008 }), this.materials.dial);
+
+    const dialRing = new THREE.Mesh(
+      new THREE.ExtrudeGeometry(ringShape, {
+        depth: 0.03,
+        bevelEnabled: true,
+        bevelThickness: 0.008,
+        bevelSize: 0.008
+      }),
+      this.materials.dial
+    );
     dialRing.position.z = 0.15;
     dialGroup.add(dialRing);
 
-    // Hour indices on the ring
+    // 12 Faceted Applied Hour Markers with Lume Inlay
     for (let i = 0; i < 12; i++) {
       const angle = (i / 12) * Math.PI * 2;
-      const isQ = i % 3 === 0;
-      const idx = new THREE.Mesh(new THREE.BoxGeometry(isQ ? 0.06 : 0.035, 0.16, 0.04), this.materials.case);
-      idx.position.set(Math.sin(angle) * 1.2, Math.cos(angle) * 1.2, 0.21); // Lifted above dial surface
-      idx.rotation.z = -angle;
-      dialGroup.add(idx);
+      const isQuarter = i % 3 === 0;
+
+      const idxGroup = new THREE.Group();
+      const markerMesh = new THREE.Mesh(
+        new THREE.BoxGeometry(isQuarter ? 0.065 : 0.038, 0.17, 0.04),
+        this.materials.case
+      );
+      idxGroup.add(markerMesh);
+
+      // SuperLumiNova strip
+      const lumeStrip = new THREE.Mesh(
+        new THREE.BoxGeometry(isQuarter ? 0.035 : 0.018, 0.11, 0.01),
+        this.materials.lume
+      );
+      lumeStrip.position.z = 0.021;
+      idxGroup.add(lumeStrip);
+
+      idxGroup.position.set(Math.sin(angle) * 1.20, Math.cos(angle) * 1.20, 0.175);
+      idxGroup.rotation.z = -angle;
+      dialGroup.add(idxGroup);
     }
 
+    // ── Hands Assembly ──
     const handsGroup = new THREE.Group();
 
-    // Hour hand
-    const hrShape = new THREE.Shape();
-    hrShape.moveTo(-0.03, 0); hrShape.lineTo(-0.02, 0.65); hrShape.lineTo(0, 0.8); hrShape.lineTo(0.02, 0.65); hrShape.lineTo(0.03, 0); hrShape.closePath();
-    this.hourHandMesh = new THREE.Mesh(new THREE.ExtrudeGeometry(hrShape, { depth: 0.02, bevelEnabled: false }), this.materials.case);
-    const hrLume = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.4, 0.025), this.materials.lume);
-    hrLume.position.set(0, 0.38, 0.005);
-    this.hourHandMesh.add(hrLume);
-    this.hourHandMesh.position.z = 0.22;
+    // Helper: Faceted Dauphine Hand with center spine ridge
+    const createDauphineHand = (length, width, zPos) => {
+      const handGroup = new THREE.Group();
+
+      const leftShape = new THREE.Shape();
+      leftShape.moveTo(0, -0.06);
+      leftShape.lineTo(-width * 0.5, 0.15);
+      leftShape.lineTo(0, length);
+      leftShape.lineTo(0, -0.06);
+      leftShape.closePath();
+
+      const rightShape = new THREE.Shape();
+      rightShape.moveTo(0, -0.06);
+      rightShape.lineTo(width * 0.5, 0.15);
+      rightShape.lineTo(0, length);
+      rightShape.lineTo(0, -0.06);
+      rightShape.closePath();
+
+      const leftFacet = new THREE.Mesh(
+        new THREE.ExtrudeGeometry(leftShape, { depth: 0.016, bevelEnabled: false }),
+        this.materials.case
+      );
+      const rightFacet = new THREE.Mesh(
+        new THREE.ExtrudeGeometry(rightShape, { depth: 0.016, bevelEnabled: false }),
+        this.materials.case
+      );
+      // Subtle dihedral tilt along center spine for authentic light bounce
+      leftFacet.rotation.y = 0.05;
+      rightFacet.rotation.y = -0.05;
+      handGroup.add(leftFacet, rightFacet);
+
+      // SuperLumiNova inlay canal
+      const lume = new THREE.Mesh(
+        new THREE.BoxGeometry(width * 0.32, length * 0.55, 0.012),
+        this.materials.lume
+      );
+      lume.position.set(0, length * 0.45, 0.01);
+      handGroup.add(lume);
+
+      handGroup.position.z = zPos;
+      return handGroup;
+    };
+
+    // 1. Hour Hand
+    this.hourHandMesh = createDauphineHand(0.72, 0.09, 0.22);
     handsGroup.add(this.hourHandMesh);
 
-    // Minute hand
-    const mnShape = new THREE.Shape();
-    mnShape.moveTo(-0.025, 0); mnShape.lineTo(-0.018, 0.95); mnShape.lineTo(0, 1.1); mnShape.lineTo(0.018, 0.95); mnShape.lineTo(0.025, 0); mnShape.closePath();
-    this.minHandMesh = new THREE.Mesh(new THREE.ExtrudeGeometry(mnShape, { depth: 0.02, bevelEnabled: false }), this.materials.case);
-    const mnLume = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.65, 0.025), this.materials.lume);
-    mnLume.position.set(0, 0.55, 0.005);
-    this.minHandMesh.add(mnLume);
-    this.minHandMesh.position.z = 0.25;
+    // 2. Minute Hand
+    this.minHandMesh = createDauphineHand(1.08, 0.075, 0.25);
     handsGroup.add(this.minHandMesh);
 
-    // Second hand
+    // 3. Seconds Hand (Slender needle with Horologia crest counterweight)
     const scShape = new THREE.Shape();
-    scShape.moveTo(-0.01, -0.25); scShape.lineTo(0.01, -0.25); scShape.lineTo(0.006, 1.15); scShape.lineTo(-0.006, 1.15); scShape.closePath();
-    this.secHandMesh = new THREE.Mesh(new THREE.ExtrudeGeometry(scShape, { depth: 0.012, bevelEnabled: false }), this.materials.lume);
-    const counter = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.015, 16), this.materials.case);
+    scShape.moveTo(-0.009, -0.28);
+    scShape.lineTo(0.009, -0.28);
+    scShape.lineTo(0.005, 1.18);
+    scShape.lineTo(-0.005, 1.18);
+    scShape.closePath();
+
+    this.secHandMesh = new THREE.Mesh(
+      new THREE.ExtrudeGeometry(scShape, { depth: 0.012, bevelEnabled: false }),
+      this.materials.lume
+    );
+    const counter = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.055, 0.055, 0.015, 16),
+      this.materials.case
+    );
     counter.rotation.x = Math.PI / 2;
-    counter.position.set(0, -0.15, 0.008);
+    counter.position.set(0, -0.16, 0.008);
     this.secHandMesh.add(counter);
     this.secHandMesh.position.z = 0.28;
     handsGroup.add(this.secHandMesh);
 
-    // Center cap
-    const capGeo = new THREE.CylinderGeometry(0.08, 0.08, 0.025, 24);
-    const cap = new THREE.Mesh(capGeo, this.materials.case);
+    // Diamond-polished center pinion cap
+    const cap = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.075, 0.065, 0.035, 24),
+      this.materials.case
+    );
     cap.rotation.x = Math.PI / 2;
-    cap.position.z = 0.3;
+    cap.position.z = 0.30;
     handsGroup.add(cap);
 
     dialGroup.add(handsGroup);
@@ -525,91 +1042,138 @@ export class WatchModel {
   }
 
   // ─────────────────────────────────────────────────────────────────────────
-  // 10. SOLID Opaque Dial Face (NEW)
-  // This covers the skeleton movement at 0%, giving a fully assembled look.
-  // It lifts off in Chapter 2 along with the dial ring.
+  // 10. Solid Sunburst Dial Face (Assembled Exterior)
   // ─────────────────────────────────────────────────────────────────────────
   buildDialFace() {
     const dialFaceGroup = new THREE.Group();
 
-    // Main solid disc — sits just below the hands
+    // Solid dial disc sits at z = 0.13 (just below hands at z = 0.22)
     const faceGeo = new THREE.CylinderGeometry(1.28, 1.28, 0.03, 64);
     const faceMesh = new THREE.Mesh(faceGeo, this.materials.dialFace);
     faceMesh.rotation.x = Math.PI / 2;
-    faceMesh.position.z = 0.13; // just below hands (hands at z=0.22-0.28)
+    faceMesh.position.z = 0.13;
     dialFaceGroup.add(faceMesh);
 
-    // Sunburst texture lines (decorative radial grooves)
-    const lineMat = new THREE.LineBasicMaterial({ color: 0x1a2030, transparent: true, opacity: 0.6 });
+    // Sunburst optical lines (60 radial brushed reflections)
+    const lineMat = new THREE.LineBasicMaterial({
+      color: 0x1f2e46,
+      transparent: true,
+      opacity: 0.5
+    });
     for (let i = 0; i < 60; i++) {
       const angle = (i / 60) * Math.PI * 2;
       const pts = [
-        new THREE.Vector3(Math.cos(angle) * 0.08, Math.sin(angle) * 0.08, 0.145),
-        new THREE.Vector3(Math.cos(angle) * 1.22, Math.sin(angle) * 1.22, 0.145),
+        new THREE.Vector3(Math.cos(angle) * 0.08, Math.sin(angle) * 0.08, 0.146),
+        new THREE.Vector3(Math.cos(angle) * 1.22, Math.sin(angle) * 1.22, 0.146)
       ];
       dialFaceGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), lineMat));
     }
 
-    // Sub-dial circle (small seconds indicator at 6 o'clock position)
+    // Sub-seconds dial at 6 o'clock (recessed snailing rings)
     const subShape = new THREE.Shape();
-    subShape.absarc(0, -0.72, 0.22, 0, Math.PI * 2, false);
+    subShape.absarc(0, -0.68, 0.24, 0, Math.PI * 2, false);
     const subHole = new THREE.Path();
-    subHole.absarc(0, -0.72, 0.18, 0, Math.PI * 2, true);
+    subHole.absarc(0, -0.68, 0.20, 0, Math.PI * 2, true);
     subShape.holes.push(subHole);
-    const subGeo = new THREE.ExtrudeGeometry(subShape, { depth: 0.005, bevelEnabled: false });
-    const subDial = new THREE.Mesh(subGeo, new THREE.MeshStandardMaterial({ color: 0x1a2030, metalness: 0.3, roughness: 0.5 }));
-    subDial.position.z = 0.145;
+
+    const subDial = new THREE.Mesh(
+      new THREE.ExtrudeGeometry(subShape, { depth: 0.006, bevelEnabled: false }),
+      this.materials.bezel
+    );
+    subDial.position.z = 0.146;
     dialFaceGroup.add(subDial);
 
-    // Dial logo text area (raised ridge near 12 o'clock)
-    const ridgeGeo = new THREE.BoxGeometry(0.35, 0.04, 0.006);
-    const ridgeMesh = new THREE.Mesh(ridgeGeo, this.materials.bezel);
-    ridgeMesh.position.set(0, 0.4, 0.155);
-    dialFaceGroup.add(ridgeMesh);
+    // Horologia applied brand plaque at 12 o'clock
+    const plaque = new THREE.Mesh(
+      new THREE.BoxGeometry(0.36, 0.05, 0.008),
+      this.materials.case
+    );
+    plaque.position.set(0, 0.45, 0.152);
+    dialFaceGroup.add(plaque);
 
-    // Register the solid dial face as its own part
     const dialFaceMeta = {
-      name: 'Solid Dial Face',
+      name: 'Solid Sunburst Dial Face',
       category: 'Exterior',
-      function: 'The decorative face of the watch, hiding the movement and providing a readable surface for the hands and markers.',
-      material: 'Lacquered Brass',
-      specs: 'Sunburst Finish · Sub-Seconds Indicator'
+      function: 'Haute Horlogerie sunburst dial face concealing the internal movement and providing high-legibility time indication.',
+      material: 'Lacquered Brass / Applied Gold',
+      specs: 'Sunburst Finish · Sub-Seconds Register · Diamond-Polished Plaque'
     };
 
     this.registerPart('dialFace', dialFaceGroup, dialFaceMeta);
   }
 
   // ─────────────────────────────────────────────────────────────────────────
-  // 11. Bezel & Sapphire Crystal Glass
+  // 11. Ceramic Bezel & Physical Domed Sapphire Crystal
   // ─────────────────────────────────────────────────────────────────────────
   buildBezelAndGlass() {
     const bezelGroup = new THREE.Group();
+
+    // Ceramic Bezel Ring with coin-edge outer grip
     const bzShape = new THREE.Shape();
     bzShape.absarc(0, 0, 1.48, 0, Math.PI * 2, false);
-    const bzH = new THREE.Path(); bzH.absarc(0, 0, 1.32, 0, Math.PI * 2, true);
+    const bzH = new THREE.Path();
+    bzH.absarc(0, 0, 1.32, 0, Math.PI * 2, true);
     bzShape.holes.push(bzH);
-    const bezelMesh = new THREE.Mesh(new THREE.ExtrudeGeometry(bzShape, { depth: 0.16, bevelEnabled: true, bevelThickness: 0.022, bevelSize: 0.022 }), this.materials.bezel);
+
+    const bezelMesh = new THREE.Mesh(
+      new THREE.ExtrudeGeometry(bzShape, {
+        depth: 0.16,
+        bevelEnabled: true,
+        bevelThickness: 0.022,
+        bevelSize: 0.022
+      }),
+      this.materials.bezel
+    );
     bezelMesh.position.z = 0.18;
+    bezelMesh.castShadow = true;
     bezelGroup.add(bezelMesh);
 
+    // Engraved Bezel Markers & 12 o'clock Luminescent Pearl Triangle
     for (let i = 0; i < 60; i += 5) {
       const angle = (i / 60) * Math.PI * 2;
+      const isTriangle = i === 0;
       const isMajor = i % 15 === 0;
-      const dot = new THREE.Mesh(new THREE.CylinderGeometry(isMajor ? 0.025 : 0.012, isMajor ? 0.025 : 0.012, 0.015, 12), this.materials.lume);
-      dot.rotation.x = Math.PI / 2;
-      dot.position.set(Math.sin(angle) * 1.4, Math.cos(angle) * 1.4, 0.35);
-      bezelGroup.add(dot);
+
+      if (isTriangle) {
+        // Luminescent triangle marker at 12 o'clock
+        const triShape = new THREE.Shape();
+        triShape.moveTo(-0.04, -0.04);
+        triShape.lineTo(0.04, -0.04);
+        triShape.lineTo(0, 0.05);
+        triShape.closePath();
+        const triMesh = new THREE.Mesh(
+          new THREE.ExtrudeGeometry(triShape, { depth: 0.015, bevelEnabled: false }),
+          this.materials.lume
+        );
+        triMesh.position.set(0, 1.40, 0.35);
+        bezelGroup.add(triMesh);
+      } else {
+        const dot = new THREE.Mesh(
+          new THREE.CylinderGeometry(isMajor ? 0.025 : 0.014, isMajor ? 0.025 : 0.014, 0.015, 12),
+          this.materials.lume
+        );
+        dot.rotation.x = Math.PI / 2;
+        dot.position.set(Math.sin(angle) * 1.40, Math.cos(angle) * 1.40, 0.35);
+        bezelGroup.add(dot);
+      }
     }
+
     this.registerPart('bezel', bezelGroup, WATCH_PARTS.BEZEL);
 
+    // ── Authentic Physical Sapphire Crystal Glass ──
     const glassGroup = new THREE.Group();
-    // Main glass disc
-    const glassMesh = new THREE.Mesh(new THREE.CylinderGeometry(1.32, 1.32, 0.09, 64), this.materials.glass);
-    glassMesh.rotation.x = Math.PI / 2;
-    glassMesh.position.z = 0.36;
-    glassGroup.add(glassMesh);
-    // Domed top surface
-    const domeGeo = new THREE.SphereGeometry(1.32, 64, 16, 0, Math.PI * 2, 0, 0.14);
+
+    // Base cylindrical gasket rim
+    const glassRim = new THREE.Mesh(
+      new THREE.CylinderGeometry(1.32, 1.32, 0.08, 64),
+      this.materials.glass
+    );
+    glassRim.rotation.x = Math.PI / 2;
+    glassRim.position.z = 0.36;
+    glassGroup.add(glassRim);
+
+    // Double-domed crystal top curvature
+    const domeGeo = new THREE.SphereGeometry(1.32, 64, 20, 0, Math.PI * 2, 0, 0.16);
     const domeMesh = new THREE.Mesh(domeGeo, this.materials.glass);
     domeMesh.position.z = 0.36;
     glassGroup.add(domeMesh);
@@ -618,20 +1182,23 @@ export class WatchModel {
   }
 
   // ─────────────────────────────────────────────────────────────────────────
-  // CHAPTER ENGINE — Tweens all parts to target positions
+  // CHAPTER ENGINE — Scrubbing parts to target explosion positions
   // ─────────────────────────────────────────────────────────────────────────
   explodeToChapter(chapterIndex, duration = 1.6) {
     this.currentChapter = chapterIndex;
-    // Note: Parts explosion is now exclusively driven by continuous scroll via `explodeByProgress`.
-    // GSAP tweens were removed here so they don't fight the user's scroll position!
   }
 
-  // Manual slider (maps 0..1 across 6 chapters)
   explodeByProgress(progress) {
     const totalChapters = 6;
-    const chapterFloat = progress * totalChapters;
-    const chapter = Math.min(Math.floor(chapterFloat), totalChapters - 1);
-    const chapterProgress = chapterFloat - Math.floor(chapterFloat);
+    const clampedProgress = Math.max(0, Math.min(1, progress));
+    const chapterFloat = clampedProgress * totalChapters;
+    let chapter = Math.floor(chapterFloat);
+    let chapterProgress = chapterFloat - chapter;
+
+    if (chapter >= totalChapters) {
+      chapter = totalChapters - 1;
+      chapterProgress = 1.0;
+    }
 
     const startTargets = CHAPTER_TARGETS[chapter] || {};
     const endTargets = CHAPTER_TARGETS[Math.min(chapter + 1, totalChapters)] || {};
@@ -650,20 +1217,31 @@ export class WatchModel {
   }
 
   // ─────────────────────────────────────────────────────────────────────────
-  // KINEMATIC SIMULATION (called every frame)
+  // KINEMATIC SIMULATION (28,800 VPH / 4 Hz precision)
   // ─────────────────────────────────────────────────────────────────────────
   updateKinematics(delta) {
-    this.gearRotations.balance += delta * 25;
-    if (this.balanceWheelMesh) this.balanceWheelMesh.rotation.z = Math.sin(this.gearRotations.balance) * 0.8;
+    // 4 Hz Balance Wheel (28,800 VPH): 8 ticks per second, 8 * pi radians/sec
+    this.gearRotations.balance += delta * (Math.PI * 8);
+    if (this.balanceWheelMesh) {
+      this.balanceWheelMesh.rotation.z = Math.sin(this.gearRotations.balance) * 0.78;
+    }
+
+    // Seconds Hand & Escapement
     this.gearRotations.seconds += delta * (Math.PI * 2 / 60);
     if (this.secHandMesh) this.secHandMesh.rotation.z = -this.gearRotations.seconds;
     if (this.escapeGear) this.escapeGear.rotation.z = this.gearRotations.seconds * 6;
+
+    // Minutes Hand & Center Gear
     this.gearRotations.minutes += delta * (Math.PI * 2 / 3600);
     if (this.minHandMesh) this.minHandMesh.rotation.z = -this.gearRotations.minutes;
     if (this.centerGear) this.centerGear.rotation.z = this.gearRotations.minutes;
+
+    // Hours Hand & Mainspring Barrel
     this.gearRotations.hours += delta * (Math.PI * 2 / 43200);
     if (this.hourHandMesh) this.hourHandMesh.rotation.z = -this.gearRotations.hours;
     if (this.mainspringGear) this.mainspringGear.rotation.z = -this.gearRotations.hours * 0.5;
+
+    // 3rd and 4th gear train ratios
     if (this.thirdGear) this.thirdGear.rotation.z = this.gearRotations.seconds * 2;
     if (this.fourthGear) this.fourthGear.rotation.z = this.gearRotations.seconds * 4;
   }
@@ -674,10 +1252,11 @@ export class WatchModel {
   applyMaterialScheme(scheme) {
     this.currentScheme = scheme;
     this.materials.case.color.setHex(scheme.caseColor);
-    this.materials.case.metalness = scheme.caseMetalness;
-    this.materials.case.roughness = scheme.caseRoughness;
+    this.materials.case.metalness = scheme.caseMetalness ?? 0.98;
+    this.materials.case.roughness = scheme.caseRoughness ?? 0.14;
     this.materials.bezel.color.setHex(scheme.bezelColor);
     this.materials.dial.color.setHex(scheme.dialColor);
+    this.materials.dialFace.color.setHex(scheme.dialColor || 0x0a101d);
     this.materials.strap.color.setHex(scheme.strapColor);
     this.materials.gear.color.setHex(scheme.gearColor);
     this.materials.plate.color.setHex(scheme.plateColor);

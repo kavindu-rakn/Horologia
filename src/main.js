@@ -20,10 +20,10 @@ const CHAPTERS = [
     title: 'The Art of Mechanical Precision',
     body: 'A single mechanical watch contains over 200 hand-finished components — each one indispensable. This masterpiece is crafted to endure for centuries, powered by nothing but the human wrist.',
     tags: ['28,800 VPH', 'Swiss Lever Escapement'],
-    camera: { x: 0.2,  y: 1.2,  z: 7.0  },
-    lookAt: { x: 0,    y: -0.1, z: 0    },
+    camera: { x: 0.2,  y: 0.8,  z: 7.2  },
+    lookAt: { x: 0.2,  y: 0.0,  z: 0    },
     watchRot: { x: 0.38, y: -0.22, z: 0.0 },
-    watchPos: { x: 0,    y: 0,    z: 0   },
+    watchPos: { x: 0.35, y: 0.0,  z: 0   },
     autoRotate: true,   // gentle oscillation, not full spin
   },
   {
@@ -31,12 +31,10 @@ const CHAPTERS = [
     title: 'Domed Sapphire Crystal & Ceramic Bezel',
     body: 'Synthetic corundum — 9 Mohs hardness, second only to diamond. The domed sapphire crystal refracts light across the movement, while the ceramic bezel resists scratches and corrosion permanently.',
     tags: ['Al₂O₃ Corundum', 'Anti-Reflective Coating', '9H Hardness'],
-    // Camera moves slightly forward and above, looking at the lifted glass
-    camera: { x: 0.5,  y: 2.2,  z: 6.2  },
-    lookAt: { x: 0,    y: 0.3,  z: 0.5  },
-    // Gentle 3/4 tilt — still shows the watch face clearly
-    watchRot: { x: 0.52, y: -0.18, z: 0.0 },
-    watchPos: { x: 0.2,  y: 0,    z: 0   },
+    camera: { x: 0.8,  y: 1.6,  z: 6.6  },
+    lookAt: { x: 0.2,  y: 0.3,  z: 0.6  },
+    watchRot: { x: 0.36, y: -0.16, z: 0.0 },
+    watchPos: { x: 0.35, y: -0.1, z: 0   },
     autoRotate: false,
   },
   {
@@ -44,12 +42,10 @@ const CHAPTERS = [
     title: 'Skeleton Dial & Luminescent Hands',
     body: 'The skeletonized dial ring reveals the movement beneath. Each hand is finished with SuperLumiNova C3 lume — glowing for up to 8 hours in complete darkness, charged by ambient light.',
     tags: ['SuperLumiNova C3', 'Beveled Indexes', 'Open-Worked Movement'],
-    // Pull camera high + slightly behind to see dial face from above without flipping
-    camera: { x: 0,    y: 4.2,  z: 5.0  },
-    lookAt: { x: 0,    y: 0.4,  z: 0    },
-    // 55° tilt looking down at dial face — not 77° (which flips the watch)
-    watchRot: { x: 0.95, y: 0.0,  z: 0.0 },
-    watchPos: { x: 0,    y: -0.3, z: 0   },
+    camera: { x: 0.4,  y: 0.9,  z: 5.6  },
+    lookAt: { x: 0.15, y: 0.1,  z: 0.4  },
+    watchRot: { x: 0.24, y: -0.12, z: 0.0 },
+    watchPos: { x: 0.35, y: -0.1, z: 0   },
     autoRotate: false,
   },
   {
@@ -57,10 +53,10 @@ const CHAPTERS = [
     title: 'The Precision Gear Train',
     body: 'Five interlocking brass wheels transmit power from the mainspring barrel to the escapement. Each wheel tooth is hand-chamfered with an angle graver — a process taking 3 hours per wheel.',
     tags: ['Mainspring Barrel', 'Brass Alloy', 'Hand-Chamfered Teeth'],
-    camera: { x: -3.2, y: 1.2,  z: 5.0  },
-    lookAt: { x: -0.8, y: 0.3,  z: 0    },
-    watchRot: { x: 0.55, y: 0.45, z: -0.1 },
-    watchPos: { x: 0.5,  y: 0,    z: 0   },
+    camera: { x: -2.0, y: 1.4,  z: 5.6  },
+    lookAt: { x: -0.8, y: 0.4,  z: 0.3  },
+    watchRot: { x: 0.30, y: 0.25, z: 0.0 },
+    watchPos: { x: 0.55, y: -0.15, z: 0  },
     autoRotate: false,
   },
   {
@@ -68,21 +64,21 @@ const CHAPTERS = [
     title: 'Balance Wheel & Hairspring',
     body: 'The heart of the movement oscillates at 28,800 vibrations per hour — 4 Hz — governed by an isochronal flat hairspring. Each oscillation is regulated to ±2 seconds per day accuracy.',
     tags: ['4 Hz Oscillation', 'Glucydur Balance', 'Nivarox Hairspring'],
-    camera: { x: -4.0, y: 2.2,  z: 3.5  },
-    lookAt: { x: -1.5, y: 0.8,  z: 0.5  },
-    watchRot: { x: 0.5,  y: 0.6,  z: 0.08 },
-    watchPos: { x: 0.8,  y: 0,    z: 0   },
+    camera: { x: -2.2, y: 1.8,  z: 5.2  },
+    lookAt: { x: -1.4, y: 1.0,  z: 0.6  },
+    watchRot: { x: 0.28, y: 0.22, z: 0.0 },
+    watchPos: { x: 0.60, y: -0.25, z: 0  },
     autoRotate: false,
   },
   {
     num: '06',
     title: 'Bridges, Jewels & Architecture',
-    body: '17 synthetic ruby jewels act as friction-free bearings for the gear pivots. The architectural mainplate bridges are hand-anglaged using a 45° chamfer — visible only under 10x magnification.',
-    tags: ['17 Jewels', 'Côtes de Genève', 'Blued Screws'],
-    camera: { x: 2.8,  y: -1.8, z: 5.5  },
-    lookAt: { x: 0.8,  y: -0.4, z: 0.4  },
-    watchRot: { x: 0.3,  y: -0.6, z: 0.12 },
-    watchPos: { x: -0.4, y: 0.3,  z: 0   },
+    body: '27 synthetic ruby jewels act as friction-free bearings for the gear pivots. The architectural mainplate bridges are hand-anglaged using a 45° chamfer — visible only under 10x magnification.',
+    tags: ['27 Jewels', 'Côtes de Genève', 'Blued Screws'],
+    camera: { x: 1.2,  y: 1.4,  z: 6.2  },
+    lookAt: { x: 0.4,  y: 0.3,  z: 0.6  },
+    watchRot: { x: 0.30, y: -0.15, z: 0.0 },
+    watchPos: { x: 0.30, y: -0.10, z: 0  },
     autoRotate: false,
   },
   {
@@ -90,10 +86,10 @@ const CHAPTERS = [
     title: 'The Complete Holographic Matrix',
     body: 'Every component laid bare — 200+ parts in perfect spatial harmony. From the oscillating rotor that winds the mainspring, to the hairspring that governs each tick. This is time, deconstructed.',
     tags: ['200+ Components', 'Haute Horlogerie', 'Bespoke Movement'],
-    camera: { x: 1.5,  y: 3.0,  z: 10.0 },
-    lookAt: { x: 0,    y: 0.5,  z: 0    },
-    watchRot: { x: 0.5,  y: -0.5, z: 0.08 },
-    watchPos: { x: 0,    y: 0,    z: 0   },
+    camera: { x: 1.2,  y: 2.2,  z: 9.0  },
+    lookAt: { x: 0.1,  y: 0.2,  z: 0    },
+    watchRot: { x: 0.35, y: -0.25, z: 0.0 },
+    watchPos: { x: 0.25, y: 0.0,  z: 0   },
     autoRotate: true,   // gentle oscillation in final holographic view
   },
 ];
@@ -111,6 +107,7 @@ function escapeHTML(str) {
 // ── Main App ─────────────────────────────────────────────────────────────────
 class HorologiaApp {
   constructor() {
+    window.app = this;
     this.container = document.getElementById('canvas-container');
     this.sceneManager = new SceneManager(this.container);
     this.watchModel = new WatchModel(this.sceneManager.scene);
@@ -203,10 +200,8 @@ class HorologiaApp {
     document.querySelectorAll('.dot').forEach(dot => {
       dot.addEventListener('click', () => {
         const ch = parseInt(dot.dataset.chapter);
-        const scrollTarget = (ch / CHAPTERS.length) * (700 - 10); // vh
-        // Convert vh to pixels
-        const px = (scrollTarget / 100) * window.innerHeight;
-        this.lenis.scrollTo(px, { duration: 1.4 });
+        const px = (ch + 0.15) * window.innerHeight;
+        this.lenis.scrollTo(px, { duration: 1.2 });
       });
     });
   }
